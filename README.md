@@ -10,7 +10,6 @@
 
 
 ## Contributions
----
-Leslie Cieters @leciet
-Nemo Didier @NemoDidier
-Sara Larcher @s-larcher
+Leslie Cieters @leciet /n
+Nemo Didier @NemoDidier /n
+Sara Larcher @s-larcher /n
