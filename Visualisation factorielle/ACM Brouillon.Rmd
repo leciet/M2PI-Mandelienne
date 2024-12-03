@@ -34,7 +34,19 @@ Données
 # ```
 
 ```{r}
-load("data_clean.RData")
+rm(new_full)
+
+row_margin<- rowSums(new_full)
+
+sum(row_margin == 0)
+any(row_margin == 0)
+
+# zero_rows <- row_margin == 0
+# dta_cleaned <- dta[!zero_rows, ]
+# dta <- dta_cleaned
+```
+
+```{r}
 print(dta[6126,])
 print(dta[0,])
 
@@ -129,18 +141,8 @@ sum(maladie_complexe == 0)
 any(maladie_complexe == 0)
 
 ```
-```{r}
 
-row_margin<- rowSums(dta)
-View(row_margin)
 
-sum(row_margin == 0)
-any(row_margin == 0)
-
-zero_rows <- row_margin == 0
-dta_cleaned <- dta[!zero_rows, ]
-dta <- dta_cleaned
-```
 
 Parallélisation de simple SVD, cela correspond plutôt à une ACP sur données binaires
 ```{r}

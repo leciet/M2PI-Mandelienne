@@ -1,0 +1,202 @@
+---
+title: "Brouillon"
+author: "Nemo"
+date: "2024-12-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+Et maintenant l'AFC, c'est parti
+```{r}
+# 1. Préparation de la matrice (déjà en format tableau de contingence 0/1)
+# AFC avec gestion des NA
+X <- as.matrix(dta)
+n_total <- sum(X)
+row_margins <- rowSums(X)
+col_margins <- colSums(X)
+
+# Recalcul après filtrage éventuel
+expected <- row_margins %*% t(col_margins) / n_total
+
+# Calcul de Z en évitant les NA
+Z <- (X/sqrt(expected)) - sqrt(outer(row_margins/n_total, col_margins/n_total))
+
+# Vérification des NA
+if(any(is.na(Z))) {
+    warning("Valeurs NA détectées dans la matrice Z")
+    # Remplacer les NA par 0 ou une autre stratégie selon le contexte
+    Z[is.na(Z)] <- 0
+}
+
+# Conversion en FBM et SVD
+Z_fbm <- as_FBM(Z)
+res_svd <- big_SVD(Z_fbm, k = 5)
+
+View(res_svd)
+
+# 7. Calcul des résultats de l'AFC
+# Valeurs propres et inerties
+eigenvalues <- res_svd$d^2
+inertia_pct <- eigenvalues/sum(eigenvalues) * 100
+
+# Coordonnées factorielles
+# Coordonnées des lignes (profils lignes)
+coord_rows <- sweep(res_svd$u, 2, res_svd$d, "*")
+
+# Coordonnées des colonnes (profils colonnes)
+coord_cols <- sweep(res_svd$v, 2, res_svd$d, "*")
+
+# # 8. Calcul des contributions
+# # Contributions des lignes
+# contrib_rows <- sweep(coord_rows^2, 1, row_masses, "*")
+# contrib_rows <- sweep(contrib_rows, 2, eigenvalues, "/")
+# 
+# # Contributions des colonnes
+# contrib_cols <- sweep(coord_cols^2, 1, col_masses, "*")
+# contrib_cols <- sweep(contrib_cols, 2, eigenvalues, "/")
+# 
+# # 9. Calcul des cosinus carrés
+# # Cosinus carrés des lignes
+# dist_rows <- sweep(row_profiles, 2, col_masses, "-")^2 / col_masses
+# dist_rows <- rowSums(dist_rows)
+# cos2_rows <- sweep(coord_rows^2, 1, dist_rows, "/")
+# 
+# # Cosinus carrés des colonnes
+# dist_cols <- sweep(col_profiles, 2, row_masses, "-")^2 / row_masses
+# dist_cols <- rowSums(dist_cols)
+# cos2_cols <- sweep(coord_cols^2, 1, dist_cols, "/")
+
+
+```
+
+```{r}
+# 1. Graphique des valeurs propres (scree plot)
+df_eig <- data.frame(
+  dimension = 1:length(eigenvalues),
+  percentage = inertia_pct
+)
+
+ggplot(df_eig, aes(x = dimension, y = percentage)) +
+  geom_col(fill = "steelblue") +
+  geom_line() +
+  geom_point() +
+  labs(title = "Pourcentage d'inertie par dimension",
+       x = "Dimension",
+       y = "Pourcentage d'inertie (%)") +
+  theme_bw()
+```
+
+```{r}
+# 2. Graphique symétrique (lignes et colonnes)
+df_rows <- data.frame(
+  Dim1 = coord_rows[,1],
+  Dim2 = coord_rows[,2],
+  Type = "Lignes",
+  Label = rownames(X)
+)
+
+df_cols <- data.frame(
+  Dim1 = coord_cols[,1],
+  Dim2 = coord_cols[,2],
+  Type = "Colonnes",
+  Label = colnames(X)
+)
+
+df_combined <- rbind(df_rows, df_cols)
+
+# Calcul des contributions pour la taille des points
+row_contrib <- sweep(coord_rows^2, 1, row_margins, "*")
+row_contrib <- sweep(row_contrib, 2, eigenvalues, "/") * 100
+
+col_contrib <- sweep(coord_cols^2, 1, col_margins, "*")
+col_contrib <- sweep(col_contrib, 2, eigenvalues, "/") * 100
+
+df_combined$Contrib <- c(row_contrib[,1], col_contrib[,1])
+
+# Graphique symétrique
+ggplot(df_combined, aes(x = Dim1, y = Dim2, color = Type, size = Contrib, label = Label)) +
+  geom_point(alpha = 0.6) +
+  geom_text_repel(data = subset(df_combined, Contrib > mean(Contrib)),
+                  aes(label = Label),
+                  max.overlaps = 20) +
+  scale_size_continuous(range = c(1, 5)) +
+  coord_fixed() +
+  labs(title = "Graphique symétrique de l'AFC",
+       x = paste0("Dimension 1 (", round(inertia_pct[1], 2), "%)"),
+       y = paste0("Dimension 2 (", round(inertia_pct[2], "%)"))) +
+  theme_bw()
+```
+  
+```{r}
+# 3. Graphiques des contributions
+# Pour les lignes
+row_contrib_df <- data.frame(
+  Label = rownames(X),
+  Contrib = row_contrib[,1]
+) %>%
+  arrange(desc(Contrib)) %>%
+  head(20)
+
+ggplot(row_contrib_df, aes(x = reorder(Label, Contrib), y = Contrib)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Contributions des lignes - Dimension 1",
+       x = "Lignes",
+       y = "Contribution (%)") +
+  theme_bw()
+
+# Pour les colonnes
+col_contrib_df <- data.frame(
+  Label = colnames(X),
+  Contrib = col_contrib[,1]
+) %>%
+  arrange(desc(Contrib)) %>%
+  head(20)
+
+ggplot(col_contrib_df, aes(x = reorder(Label, Contrib), y = Contrib)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Contributions des colonnes - Dimension 1",
+       x = "Colonnes",
+       y = "Contribution (%)") +
+  theme_bw()
+```
+
+```{r}
+# 4. Graphique des profils lignes et colonnes séparés
+# Profils lignes
+ggplot(df_rows, aes(x = Dim1, y = Dim2, size = row_contrib[,1])) +
+  geom_point(alpha = 0.6) +
+  geom_text_repel(data = subset(df_rows, row_contrib[,1] > mean(row_contrib[,1])),
+                  aes(label = Label),
+                  max.overlaps = 20) +
+  coord_fixed() +
+  labs(title = "Profils lignes",
+       x = paste0("Dimension 1 (", round(inertia_pct[1], 2), "%)"),
+       y = paste0("Dimension 2 (", round(inertia_pct[2], "%)"))) +
+  theme_bw()
+
+# Profils colonnes
+ggplot(df_cols, aes(x = Dim1, y = Dim2, size = col_contrib[,1])) +
+  geom_point(alpha = 0.6) +
+  geom_text_repel(data = subset(df_cols, col_contrib[,1] > mean(col_contrib[,1])),
+                  aes(label = Label),
+                  max.overlaps = 20) +
+  coord_fixed() +
+  labs(title = "Profils colonnes",
+       x = paste0("Dimension 1 (", round(inertia_pct[1], 2), "%)"),
+       y = paste0("Dimension 2 (", round(inertia_pct[2], "%)")) +
+  theme_bw())
+  
+  rm(data_full)
+  
+```
