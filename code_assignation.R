@@ -36,7 +36,7 @@ df$ms <- sapply(strsplit(as.character(df$ms), " "), `[`, 1)
 ### on fixe un seuil s pour la distance et on assigne aux m.c. les m.s. à une 
 ### distance inférieur ou égale à ce seuil -> utilisation de df
 
-s <- 0.84 # à modifier si besoin 
+s <- 0.6 # à modifier si besoin 
 
 
 
@@ -73,11 +73,20 @@ df_filtre[103,]
 
 
 df_filtre <- df %>% 
-  filter(distance<=s)
+  filter(distance<=0.5)
 
 matrice_filtre <- df_filtre %>% 
   pivot_wider(names_from = ms,values_from = distance)
 
 
+# Tracer une heatmap avec ggplot2
+plot1 <- ggplot(df_filtre, aes(x = ms, y = mc, fill = distance)) +
+  geom_tile() +
+  scale_fill_gradient(low = "pink2", high = "firebrick") +
+  labs(title = "Matrice de Distance", x = "MS", y = "MC", fill = "Distance")+
+  theme(axis.text.x = element_text(angle = 30,size = 2),
+        axis.text.y = element_text(size=3))
 
+library(plotly)
 
+ggplotly(plot1)
