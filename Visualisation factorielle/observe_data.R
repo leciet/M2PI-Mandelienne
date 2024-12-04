@@ -11,8 +11,8 @@ library(Factoshiny)
 library(tidyverse)
 
 # Importation des données
-omim <- read.csv('www/Profils_OMIM.csv.gz')
-phecode <- read.csv('www/Profils_Phecodes.csv.gz')
+omim <- read.csv('Matrices de Jules/Profils_OMIM.csv.gz')
+phecode <- read.csv('Matrices de Jules/Profils_Phecodes.csv.gz')
 
 
 # Mise en forme et juxtaposition des tableaux de données

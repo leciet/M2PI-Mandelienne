@@ -29,6 +29,7 @@ o_sorensen_mat <- as.matrix(o_sorensen) #matrice des distances
 df <- melt(o_sorensen_mat)
 colnames(df) <- c("mc", "ms", "distance")
 
+df$ms <- sapply(strsplit(as.character(df$ms), " "), `[`, 1)
 
 ## 1. par un seuil global-------------------------------------------------------
 
@@ -37,7 +38,7 @@ colnames(df) <- c("mc", "ms", "distance")
 
 s <- 0.6 # à modifier si besoin 
 
-df$ms <- sapply(strsplit(as.character(df$ms), " "), `[`, 1)
+
 
 df_filtre <- df %>% 
   filter(distance<=s) %>%   
@@ -49,7 +50,26 @@ df_filtre <- unique(df_filtre)
 
 str_count(df_filtre$liste,';')
 
+df_filtre[103,]
+
+## 2. par un seuil individuel --------------------------------------------------
+
+q <- 0.005 # fixe le quantile qui servira de limite 
+
+df_filtre <- df %>% 
+  group_by(mc) %>% 
+  filter(distance <= quantile(distance,q)) %>% 
+  summarise( mc = mc, liste = paste(ms,collapse = " ; "),distance=distance,.groups = 'drop')
+
+
+df_filtre <- unique(df_filtre)
+
+str_count(df_filtre$liste,';')
 
 df_filtre[103,]
+
+
+
+
 
 
