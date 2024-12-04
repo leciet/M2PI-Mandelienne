@@ -36,7 +36,7 @@ df$ms <- sapply(strsplit(as.character(df$ms), " "), `[`, 1)
 ### on fixe un seuil s pour la distance et on assigne aux m.c. les m.s. à une 
 ### distance inférieur ou égale à ce seuil -> utilisation de df
 
-s <- 0.6 # à modifier si besoin 
+s <- 0.84 # à modifier si besoin 
 
 
 
@@ -69,6 +69,14 @@ str_count(df_filtre$liste,';')
 df_filtre[103,]
 
 
+## 3. Petit test pour visualiser les associations ------------------------------
+
+
+df_filtre <- df %>% 
+  filter(distance<=s)
+
+matrice_filtre <- df_filtre %>% 
+  pivot_wider(names_from = ms,values_from = distance)
 
 
 
