@@ -20,10 +20,13 @@ load('Visualisation factorielle/data_clean.RData')
 ### n'ayant aucune variabilité (0 pour tous les phénotypes)
 
 # à ne lancer que si nécessaire car très long. Autrement la matrice de distance est importé plus bas
-# d_sorensen <- dist.binary(new_full,method = 5)
+origin_sorensen <- dist.binary(new_full,method = 5)
+origin_ochiai <- dist.binary(new_full,method = 7)
 
+save(origin_sorensen,file="Matrice d'association/distances_orensen.RData")
+save(origin_ochiai,file = "Matrice d'association/distances_ochiai.RData")
 
-load('distances.RData')
+load("Matrice d'association/distances.RData")
 
 matrice_sorensen <- as.data.frame(as.matrix(origin_sorensen))
 

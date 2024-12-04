@@ -25,68 +25,83 @@ o_sorensen <- matrice_sorensen[6126:7089,1:6125] #dataframe de la matrice des di
 o_sorensen_mat <- as.matrix(o_sorensen) #matrice des distances
 
 
-# Conversion de la matrice en format long
-df <- melt(o_sorensen_mat)
-colnames(df) <- c("mc", "ms", "distance")
+# Création de fonctions
 
-df$ms <- sapply(strsplit(as.character(df$ms), " "), `[`, 1)
+#' AssignGene
+#' @description
+#' A short description...
+#'
+#' @param dist 
+#' @param method 
+#' @param s 
+#' @param q
+#' @param graph 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE){
+  # Conversion de la matrice en format long
+  flong <- melt(dist)
+  colnames(flong) <- c("mc", "ms", "distance")
+  
+  if(method=='seuil'){
+    flong_filtre <- flong %>% 
+      filter(distance<=s) %>% 
+      group_by(mc) %>% 
+      summarise( mc = mc, ms=ms, distance=distance, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
+  } else if(method=='quantile'){
+    flong_filtre <- flong %>% 
+      filter(distance<=quantile(distance,q))%>% 
+      group_by(mc) %>% 
+      summarise( mc = mc, ms=ms, distance=distance, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
+  } else{
+    stop('méthode non reconnue')
+  }
+  assign_liste <- unique(flong_filtre[,c(1,4)])
+  assign_matrice <-  flong_filtre[,1:3] %>% 
+    mutate(distance=ifelse(distance!=0,1,0)) %>% 
+    pivot_wider(names_from = ms,values_from = distance) 
+  
+  if(graph==TRUE){
+    plot <- flong_filtre %>% 
+      mutate(distance=ifelse(distance!=0,1,0)) %>% 
+      ggplot( aes(x = ms, y = mc, fill = distance)) +
+        geom_tile() +
+        scale_fill_gradient(low = "pink2", high = "firebrick") +
+        labs(title = "Matrice d'Association", x = "MS", y = "MC", fill = "Distance")+
+        theme(axis.text.x = element_text(angle = 30,size = 2),
+            axis.text.y = element_text(size=3))
+    print(plot)
+  }
+  
+  return(list(assign_liste,assign_matrice))
+  
+}
 
-## 1. par un seuil global-------------------------------------------------------
+test <- AssignGene(o_sorensen_mat)
 
-### on fixe un seuil s pour la distance et on assigne aux m.c. les m.s. à une 
-### distance inférieur ou égale à ce seuil -> utilisation de df
-
-s <- 0.6 # à modifier si besoin 
+test1 <- as.data.frame(test[[1]])
+test2 <- as.data.frame(test[[2]])
 
 
 
-df_filtre <- df %>% 
-  filter(distance<=s) %>%   
-  group_by(mc) %>% 
-  summarise( mc = mc, liste = paste(ms,collapse = " ; "))
 
 
-df_filtre <- unique(df_filtre)
-
-str_count(df_filtre$liste,';')
-
-df_filtre[103,]
-
-## 2. par un seuil individuel --------------------------------------------------
-
-q <- 0.005 # fixe le quantile qui servira de limite 
-
-df_filtre <- df %>% 
-  group_by(mc) %>% 
-  filter(distance <= quantile(distance,q)) %>% 
-  summarise( mc = mc, liste = paste(ms,collapse = " ; "),distance=distance,.groups = 'drop')
 
 
-df_filtre <- unique(df_filtre)
-
-str_count(df_filtre$liste,';')
-
-df_filtre[103,]
 
 
-## 3. Petit test pour visualiser les associations ------------------------------
 
 
-df_filtre <- df %>% 
-  filter(distance<=0.5)
-
-matrice_filtre <- df_filtre %>% 
-  pivot_wider(names_from = ms,values_from = distance)
 
 
-# Tracer une heatmap avec ggplot2
-plot1 <- ggplot(df_filtre, aes(x = ms, y = mc, fill = distance)) +
-  geom_tile() +
-  scale_fill_gradient(low = "pink2", high = "firebrick") +
-  labs(title = "Matrice de Distance", x = "MS", y = "MC", fill = "Distance")+
-  theme(axis.text.x = element_text(angle = 30,size = 2),
-        axis.text.y = element_text(size=3))
 
-library(plotly)
 
-ggplotly(plot1)
+
+
+
+
+
+
