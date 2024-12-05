@@ -197,7 +197,10 @@ Etape 2 bis : Comparaison des matrices entre elle
 ## Etape 3 : Obtention d'une matrice "robuste" unique consensus des matrices précédentes
 
 ```{r}
-poids <- c(0.5, 0.3, 0.2)
+
+asso_acm_eucli <- association_wide_eucli
+asso_acm_manh <- association_wide_manhattan
+poids <- c(0.25, 0.25, 0.25, 0.25)
 matrices <- list()
 mat_consensus <- Reduce(`+`, Map(`*`, matrices, poids))
 ```
