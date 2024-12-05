@@ -29,15 +29,15 @@ o_sorensen_mat <- as.matrix(o_sorensen) #matrice des distances
 
 #' AssignGene
 #' @description
-#' A short description...
+#' Assigne une liste de gènes à chaque maladie complexe, la matrice de distances a en colonne les ms et en ligne les mc
 #'
-#' @param dist 
-#' @param method 
-#' @param s 
-#' @param q
-#' @param graph 
+#' @param dist objet  matrix correspondant à la matrice de distances
+#' @param method 'seuil' ou 'quantile' pour le critère d'association
+#' @param s paramètre pour la méthode seuil
+#' @param q paramètre pour la méthode quantile
+#' @param graph si TRUE affiche la matrice d'association
 #'
-#' @return
+#' @return une liste contenant 2 objets correspondant à l'assignation d'une liste de gènes par maladie et la matrice d'assignation
 #' @export
 #'
 #' @examples
@@ -47,11 +47,17 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
   colnames(flong) <- c("mc", "ms", "distance")
   
   if(method=='seuil'){
+    if (s<0 | s>1) {
+      stop("Le seuil doit être compris entre 0 et 1")
+    }
     flong_filtre <- flong %>% 
       filter(distance<=s) %>% 
       group_by(mc) %>% 
       summarise( mc = mc, ms=ms, distance=distance, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
   } else if(method=='quantile'){
+    if (q<0 | q>1) {
+      stop("Le quantile doit être compris entre 0 et 1")
+    }
     flong_filtre <- flong %>% 
       filter(distance<=quantile(distance,q))%>% 
       group_by(mc) %>% 
