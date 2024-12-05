@@ -200,16 +200,69 @@ Etape 2 bis : Comparaison des matrices entre elle
 
 asso_acm_eucli <- association_wide_eucli
 asso_acm_manh <- association_wide_manhattan
-poids <- c(0.25, 0.25, 0.25, 0.25)
-matrices <- list()
+
+#Test poids egaux 
+poids <- c(0.25, 0.25)
+matrices <- list(asso_acm_eucli, asso_acm_manh, asso_origin_ochiai, asso_origin_sorensen)
+
+#Test poids avec variance (diversite transcrit dans les distances)
+variances <- sapply(matrices, function(mat) var(as.vector(mat)))
+poids <- 1 / variances
+poids <- poids / sum(poids)
+
 mat_consensus <- Reduce(`+`, Map(`*`, matrices, poids))
+
+```
+
+Analyse de sensibilité aux poids
+
+```{r}
+matrice_consensus <- function(poids, matrices) {
+  Reduce(`+`, Map(`*`, matrices, poids))
+}
+
+evaluate_consensus <- function(matrice_consensus, reference) {
+  sum((matrice_consensus - reference)^2)
+}
+
+# Générer des combinaisons de poids
+grid_size <- 10  
+poids_grid <- expand.grid(seq(0, 1, length.out = grid_size),
+                            seq(0, 1, length.out = grid_size))
+
+# Filtrer les combinaisons où la somme des poids est proche de 1
+poids_grid <- weights_grid[rowSums(poids_grid) <= 1, ]
+poids_grid <- cbind(poids_grid, 1 - rowSums(poids_grid))
+colnames(wpoids_grid) <- paste0("w", 1:3)
+
+# Matrice de référence (par exemple, moyenne des matrices)
+reference <- Reduce(`+`, matrices) / length(matrices)
+
+# Analyse des résultats
+results <- apply(weights_grid, 1, function(poids) {
+  consensus <- compute_consensus(poids, matrices)
+  metric <- evaluate_consensus(matrice_consensus, reference)
+  metric
+})
+
+# Ajouter les résultats aux poids
+sensitivity_results <- cbind(poids_grid, metric = results)
+
+# Visualiser les résultats
+library(ggplot2)
+ggplot(as.data.frame(sensitivity_results), aes(x = w1, y = w2, z = metric)) +
+  geom_contour_filled() +
+  labs(title = "Analyse de sensibilité des poids",
+       x = "Poids pour Mat1", y = "Poids pour Mat2", fill = "Métrique") +
+  theme_minimal()
+
 ```
 
 ## Etape 4 : Etablissement du couplage MC x liste(gènes)
 
 ```{r}
 #Obtention de la matrice avec des "pourcentage de croyance" dans l'association 
-#Choix d'un seuil de confiance 
+#Choix d'un seuil de confiance =
 #Obtention liste de gène 
 #
 ```
