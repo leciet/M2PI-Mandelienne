@@ -13,11 +13,9 @@ ls()
 #####################################################################################Distance euclidienne
 
 acm_eucli_df <- as.matrix(acm_eucli_df)
-
-acm_eucli_df
-acm_manhattan_df
-View(acm_manhattan_df)
-
+View(acm_eucli_df)
+nom_col <- colnames(acm_eucli_df)
+nom_col
 ############################################################Approche globale sur tout le tableau
 
 # idée, méthode statistique Otsu, apprentissage supervisée SVM
@@ -400,3 +398,10 @@ write.csv(association_wide_eucli_ligne, "asso_euclidien_individuel.csv", row.nam
 write.csv(association_wide_manhattan, "asso_manhattan_global.csv", row.names = TRUE)
 
 library(ggplot2)
+
+asso_acm_eucli <- data.frame(ifelse(acm_eucli_df<=0.02,1,0))
+asso_acm_manhattan <- data.frame(ifelse(acm_manhattan_df<=0.04,1,0))
+save(asso_acm_manhattan,
+     file = "matrices_asso_euclidien_individuel.RData")
+save(asso_acm_eucli,
+     file = "matrices_asso_manhattan_global.RData")
