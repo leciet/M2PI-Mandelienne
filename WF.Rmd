@@ -181,6 +181,13 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
 
 ```
 
+```{r}
+asso_origin_sorensen <- AssignGene(o_sorensen_mat)[[2]]
+asso_origin_ochiai <- AssignGene(o_ochiai_mat)[[2]]
+
+```
+
+\
 Etape 2 bis : Comparaison des matrices entre elle
 
 ```{r}
