@@ -14,16 +14,11 @@ library(reshape)
 ### Sorensen
 
 load("Matrice d'association/distances_ochiai.RData")
-load("Matrice d'association/distances_sorensen.RData")
-
-matrice_sorensen <- as.data.frame(as.matrix(origin_sorensen)) #matrice complète
+load("Matrice d'association/distances_orensen.RData")
 
 
-### On récupère la partie d'intérêt dans la matrice complète
 
-o_sorensen <- matrice_sorensen[6126:7089,1:6125] #dataframe de la matrice des distances
 
-o_sorensen_mat <- as.matrix(o_sorensen) #matrice des distances
 
 
 # Création de fonctions
@@ -87,6 +82,16 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
   
 }
 
+
+### On récupère la partie d'intérêt dans la matrice complète
+
+
+matrice_sorensen <- as.data.frame(as.matrix(origin_sorensen)) #matrice complète
+
+o_sorensen <- matrice_sorensen[6126:7089,1:6125] #dataframe de la matrice des distances
+
+o_sorensen_mat <- as.matrix(o_sorensen) #matrice des distances
+
 asso_origin_sorensen <- AssignGene(o_sorensen_mat,method = 'seuil',s = 0.84)[[2]]
 
 test1 <- as.data.frame(test[[1]])
@@ -94,16 +99,24 @@ test2 <- as.data.frame(test[[2]])
 
 
 
+matrice_ochiai <- as.data.frame(as.matrix(origin_ochiai)) #matrice complète
+
+o_ochiai <- matrice_ochiai[6126:7089,1:6125] #dataframe de la matrice des distances
+
+o_ochiai_mat <- as.matrix(o_ochiai) #matrice des distances
+
+asso_origin_ochiai <- AssignGene(o_ochiai_mat,method = 'seuil',s = 0.84)[[2]]
 
 
 
 
+asso_origin_ochiai <- o_ochiai
+asso_origin_ochiai <- data.frame(ifelse(asso_origin_ochiai<=0.84,1,0))
 
+asso_origin_sorensen <- o_sorensen
+asso_origin_sorensen <- data.frame(ifelse(asso_origin_sorensen<=0.84,1,0))
 
-
-
-
-
+save(asso_origin_ochiai,asso_origin_sorensen,file="Matrice d'association/asso_origin.RData")
 
 
 
