@@ -13,7 +13,8 @@ library(reshape)
 ### On travaille pour le moment sur la matrice originel avec la distance de 
 ### Sorensen
 
-load('distances.RData')
+load("Matrice d'association/distances_ochiai.RData")
+load("Matrice d'association/distances_sorensen.RData")
 
 matrice_sorensen <- as.data.frame(as.matrix(origin_sorensen)) #matrice complète
 
@@ -86,7 +87,7 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
   
 }
 
-test <- AssignGene(o_sorensen_mat)
+asso_origin_sorensen <- AssignGene(o_sorensen_mat,method = 'seuil',s = 0.84)[[2]]
 
 test1 <- as.data.frame(test[[1]])
 test2 <- as.data.frame(test[[2]])
