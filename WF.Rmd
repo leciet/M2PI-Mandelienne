@@ -1,0 +1,123 @@
+---
+title: "Work flow"
+author: "Sara Larcher"
+date: "2024-12-03"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+Téléchargement de la data-base propre. Les actions effectuées dessus
+sont les suivantes: - Association des deux tableaux MS et MC en lignes
+et phénotypes en colonnes
+
+\- Suppression des maladies n'ayant aucun phenotype observe
+
+\- Vérification de la variabilité par colonnes sur les tableaux simples
+(MS/MC) et sur le tableau total
+
+Le jeu de données utilisé est new_full.
+
+```{r setup, include=FALSE}
+library(FactoMineR)
+library(factoextra)
+library(ade4) 
+library(tidyverse)
+library(reshape)
+
+load("data_clean.RData")
+```
+
+Mise en place d'échantillonnage plus petit
+
+```{r}
+filtre_col<- function(data, num_colonnes) {
+  colonnes_selectionnees <- sample(colnames(data), num_colonnes)
+  data_selectionnee <- data[, colonnes_selectionnees, drop = FALSE]
+  
+  result <- data[apply(data, 1, function(ligne) {
+    colonnes_avec_1 <- names(ligne)[ligne == 1] #Où sont les 1
+    return(all(colonnes_avec_1 %in% colnames(data_selectionnee)))
+  }), colonnes_selectionnees] #Ne recupére que les lignes correspondantes 
+  
+  return(result)
+}
+
+dta_small_col <- filtre_col(new_full, 100)
+
+--------------------------------------------------------------------------
+  
+rownames(phecode)<-phecode[[1]]
+phecode <- phecode[-1]
+
+filtre_ligne <- function(data_mc, data, num_lignes) {
+  lignes_selectionnees <- sample(1:nrow(data_mc), num_lignes)
+  lignes_noms <- rownames(data_mc)[lignes_selectionnees]  
+  colonnes_avec_1 <- colnames(data)[apply(data[lignes_noms, ], 2, function(colonne) {
+    return(any(colonne == 1))
+  })]
+  
+  result <- data[apply(data, 1, function(ligne) {
+    
+    colonnes_avec_1_ligne <- names(ligne)[ligne == 1]
+    return(all(colonnes_avec_1_ligne %in% colonnes_avec_1))
+  }), colnames(data) %in% colonnes_avec_1, drop = FALSE]
+  
+  return(result)
+}
+
+
+dta_small_row <- filtre_lignes(phecode, new_full, 10)
+```
+
+## Etape 1 : Application et obtention des matrices de distances
+
+#### a) A partir d'une ACM
+
+Nous suivons la convention suivant
+*`origine des données_type de distance_type d'objet.`* Les objets sont
+stockés dans le dossier "Objets R" et peuvent être load directement.
+
+```{r cars}
+mandale <- readRDS("~/R/M2PI-Mendelienne/Visualisation factorielle/mandale.rds")
+
+actif <- mandale$ind$coord
+sup <- mandale$ind.sup$coord
+dta_dist <- rbind(actif, sup)
+
+acm_eucli <- get_dist(dta_dist, method = "euclidean")
+acm_eucli <- as.data.frame(as.matrix(acm_eucli))
+acm_eucli_mx <- as.matrix(acm_eucli[6126:7089, 1:6125])
+
+acm_manhattan <- get_dist(dta_dist, method = "manhattan")
+acm_manhattan <- as.data.frame(as.matrix(acm_manhattan))
+
+acm_manhattan_df <- acm_manhattan[6126:7089, 1:6125]
+acm_manhattan_mx <- as.matrix(acm_manhattan[6126:7089, 1:6125])
+```
+
+#### b) A partir de la matrice d'origine
+
+```{r}
+d_sorensen <- dist.binary(new_full,method = 5) #Long 
+
+matrice_sorensen <- as.data.frame(as.matrix(origin_sorensen))
+o_sorensen <- matrice_sorensen[6126:7089,1:6125]
+o_sorensen_mat <- as.matrix(o_sorensen)
+```
+
+## Etape 2 : Association des maladies entre elles à partir des distances, obtention d’un pool de matrices d’assignation
+
+```{r}
+
+
+```
+
+## Etape 3 : Obtention d'une matrice "robuste" unique consensus des matrices précédentes
+
+```{r}
+
+```
+
+## Etape 4 : Etablissement du couplage MC x liste(gènes)

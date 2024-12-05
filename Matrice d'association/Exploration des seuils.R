@@ -14,7 +14,7 @@ ls()
 
 acm_eucli_df <- as.matrix(acm_eucli_df)
 
-############################################################ Approche globale sur tout le tableau
+############################################################Approche globale sur tout le tableau
 
 # idée, méthode statistique Otsu, apprentissage supervisée SVM
 
@@ -64,18 +64,18 @@ print(seuil)
 # matrice_filtered[matrice_filtered==FALSE] <- 0
 
 # Créer la heatmap
-library(pheatmap)
-matrice_filtered
-View(matrice_filtered)
-pheatmap(matrice_filtered)
-
-# Si vous voulez personnaliser la heatmap :
-pheatmap(matrice_filtered,
-         cluster_rows = TRUE,
-         cluster_cols = TRUE,
-         show_rownames = TRUE,
-         show_colnames = TRUE,
-         color = colorRampPalette(c("white", "red"))(50))
+# library(pheatmap)
+# matrice_filtered
+# View(matrice_filtered)
+# pheatmap(matrice_filtered)
+# 
+# # Si vous voulez personnaliser la heatmap :
+# pheatmap(matrice_filtered,
+#          cluster_rows = TRUE,
+#          cluster_cols = TRUE,
+#          show_rownames = TRUE,
+#          show_colnames = TRUE,
+#          color = colorRampPalette(c("white", "red"))(50))
 
 ############################################################# Approche individuelle sur toutes les lignes
 # 
@@ -369,3 +369,27 @@ table(association_wide)
    main = "Euclidien Individuel"
  )
  
+View(association_wide_eucli)
+association_wide
+association_wide_eucli
+association_wide_eucli_ligne
+association_wide_manhattan
+
+# Pour sauvegarder en RData
+save(association_wide,
+     file = "matrices_asso_manhattan_individuel.RData")
+
+save(association_wide_eucli, 
+     file = "matrices_asso_euclidien_global.RData")
+
+save(association_wide_eucli_ligne,
+     file = "matrices_asso_euclidien_individuel.RData")
+
+save(association_wide_manhattan,
+     file = "matrices_asso_manhattan_global.RData")
+
+# Pour exporter en CSV
+write.csv(association_wide, "asso_manhattan_individuel.csv", row.names = TRUE)
+write.csv(association_wide_eucli, "asso_euclidien_global.csv", row.names = TRUE)
+write.csv(association_wide_eucli_ligne, "asso_euclidien_individuel.csv", row.names = TRUE)
+write.csv(association_wide_manhattan, "asso_manhattan_global.csv", row.names = TRUE)
