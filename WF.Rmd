@@ -9,15 +9,19 @@ editor_options:
 ---
 
 Téléchargement de la data-base propre. Les actions effectuées dessus
-sont les suivantes: - Association des deux tableaux MS et MC en lignes
-et phénotypes en colonnes
+sont les suivantes:
 
-\- Suppression des maladies n'ayant aucun phenotype observe
+-   Association des deux tableaux MS et MC en lignes et phénotypes en
+    colonnes
 
-\- Vérification de la variabilité par colonnes sur les tableaux simples
-(MS/MC) et sur le tableau total
+-   Suppression des maladies n'ayant aucun phenotype observe
 
-Le jeu de données utilisé est new_full.
+-   Vérification de la variabilité par colonnes sur les tableaux simples
+    (MS/MC) et sur le tableau total
+
+Le jeu de données utilisé est new_full.\
+Ce jeu de données supprime deux maladies complexes n'ayant pas de
+variabilité dans leurs phénotypes (0 pour l'ensemble des phénotypes)
 
 ```{r setup, include=FALSE}
 library(FactoMineR)
@@ -46,7 +50,7 @@ filtre_col<- function(data, num_colonnes) {
 
 dta_small_col <- filtre_col(new_full, 100)
 
---------------------------------------------------------------------------
+# --------------------------------------------------------------------------
   
 rownames(phecode)<-phecode[[1]]
 phecode <- phecode[-1]
