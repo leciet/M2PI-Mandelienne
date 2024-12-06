@@ -195,7 +195,7 @@ Etape 2 bis : Comparaison des matrices entre elle
 ## Etape 3 : Obtention d'une matrice "robuste" unique consensus des matrices précédentes
 
 ```{r}
-matrices <- list(asso_acm_eucli, asso_acm_manhattan, asso_origin_ochiai, asso_origin_sorensen)
+matrices <- list(as.matrix(asso_acm_eucli), as.matrix(asso_acm_manhattan), as.matrix(asso_origin_ochiai), as.matrix(asso_origin_sorensen))
 
 #Test poids egaux 
 poids <- c(0.25, 0.25, 0.25,0.25)
@@ -260,6 +260,8 @@ ggplot(as.data.frame(sensitivity_results), aes(x = w1, y = w2, z = metric)) +
 #Obtention liste de gène 
 #
 
-res.list <- AssignGene(as.matrix(mat_consensus), method = "seuil", 0.51)
+res.list <- AssignGene(mat_consensus, method = "seuil", 0.7)
 View(res.list[[1]])
+
+res
 ```
