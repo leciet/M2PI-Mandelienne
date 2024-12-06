@@ -33,48 +33,6 @@ library(reshape)
 load("data_clean.RData")
 ```
 
-Mise en place d'échantillonnage plus petit
-
-```{r}
-filtre_col<- function(data, num_colonnes) {
-  colonnes_selectionnees <- sample(colnames(data), num_colonnes)
-  data_selectionnee <- data[, colonnes_selectionnees, drop = FALSE]
-  
-  result <- data[apply(data, 1, function(ligne) {
-    colonnes_avec_1 <- names(ligne)[ligne == 1] #Où sont les 1
-    return(all(colonnes_avec_1 %in% colnames(data_selectionnee)))
-  }), colonnes_selectionnees] #Ne recupére que les lignes correspondantes 
-  
-  return(result)
-}
-
-dta_small_col <- filtre_col(new_full, 100)
-
-# --------------------------------------------------------------------------
-  
-rownames(phecode)<-phecode[[1]]
-phecode <- phecode[-1]
-
-filtre_ligne <- function(data_mc, data, num_lignes) {
-  lignes_selectionnees <- sample(1:nrow(data_mc), num_lignes)
-  lignes_noms <- rownames(data_mc)[lignes_selectionnees]  
-  colonnes_avec_1 <- colnames(data)[apply(data[lignes_noms, ], 2, function(colonne) {
-    return(any(colonne == 1))
-  })]
-  
-  result <- data[apply(data, 1, function(ligne) {
-    
-    colonnes_avec_1_ligne <- names(ligne)[ligne == 1]
-    return(all(colonnes_avec_1_ligne %in% colonnes_avec_1))
-  }), colnames(data) %in% colonnes_avec_1, drop = FALSE]
-  
-  return(result)
-}
-
-
-dta_small_row <- filtre_lignes(phecode, new_full, 10)
-```
-
 ## Etape 1 : Application et obtention des matrices de distances
 
 #### a) A partir d'une ACM
@@ -90,34 +48,78 @@ actif <- mandale$ind$coord
 sup <- mandale$ind.sup$coord
 dta_dist <- rbind(actif, sup)
 
-acm_eucli <- get_dist(dta_dist, method = "euclidean")
-acm_eucli <- as.data.frame(as.matrix(acm_eucli))
-acm_eucli_mx <- as.matrix(acm_eucli[6126:7089, 1:6125])
 
-acm_manhattan <- get_dist(dta_dist, method = "manhattan")
-acm_manhattan <- as.data.frame(as.matrix(acm_manhattan))
+dist_acm_eucli <- get_dist(dta_dist, method = "euclidean")
+dist_acm_eucli <- as.data.frame(as.matrix(acm_eucli))
+dist_acm_eucli_mx <-as.matrix(acm_eucli[6126:7089, 1:6125])
 
-acm_manhattan_df <- acm_manhattan[6126:7089, 1:6125]
-acm_manhattan_mx <- as.matrix(acm_manhattan[6126:7089, 1:6125])
+dist_acm_manhattan<- get_dist(dta_dist, method = "manhattan")
+dist_acm_manhattan <- as.data.frame(as.matrix(acm_manhattan))
+dist_acm_manhattan_mx <- as.matrix(acm_manhattan[6126:7089, 1:6125])
+
 ```
 
 #### b) A partir de la matrice d'origine
 
 ```{r}
-origin_sorensen <- dist.binary(new_full,method = 5) #Long 
+dist_or_sorensen_mx <- dist.binary(new_full,method = 5) #Long 
+dist_or_sorensen_mx <- as.data.frame(as.matrix(origin_sorensen))
+dist_or_sorensen_mx<- matrice_sorensen[6126:7089,1:6125]
+dist_or_sorensen_mx<- as.matrix(o_sorensen)
 
-matrice_sorensen <- as.data.frame(as.matrix(origin_sorensen))
-o_sorensen <- matrice_sorensen[6126:7089,1:6125]
-o_sorensen_mat <- as.matrix(o_sorensen)
-
-
-origin_ochiai <- dist.binary(new_full,method = 7)
-matrice_ochiai <- as.data.frame(as.matrix(origin_ochiai))
-o_ochiai <- matrice_ochiai[6126:7089,1:6125]
-o_ochiai_mat <- as.matrix(o_ochiai)
+dist_or_ochiai_mx<- dist.binary(new_full,method = 7)
+dist_or_ochiai_mx <- as.data.frame(as.matrix(origin_ochiai))
+dist_or_ochiai_mx  <- matrice_ochiai[6126:7089,1:6125]
+dist_or_ochiai_mx  <- as.matrix(o_ochiai)
 ```
 
-## Etape 2 : Association des maladies entre elles à partir des distances, obtention d’un pool de matrices d’assignation
+## Etape 2 : Obtention d'une matrice de distance consensus
+
+```{r}
+matrices <- list(dist_acm_eucli_mx, dist_acm_manhattan_mx, dist_or_ochiai_mx,dist_or_sorensen_mx)
+
+#Test poids egaux 
+poids <- c(0.25, 0.25, 0.25,0.25)
+#Test poids avec variance (diversite transcrit dans les distances)
+variances <- sapply(matrices, function(mat) var(as.vector(mat)))
+poids <- 1 / variances
+poids <- poids / sum(poids)
+
+dist_consensus <- Reduce(`+`, Map(`*`, matrices, poids))
+```
+
+```{r}
+
+```
+
+\
+Etape 2 bis : Comparaison des matrices entre elle
+
+```{r}
+#Code Nemo 
+```
+
+## Etape 3 : Obtention d'une matrice "robuste" d'assignation 
+
+```{r}
+
+
+```
+
+## Etape 4 : Etablissement du couplage MC x liste(gènes)
+
+```{r}
+#Obtention de la matrice avec des "pourcentage de croyance" dans l'association 
+#Choix d'un seuil de confiance =
+#Obtention liste de gène 
+#
+
+res.list <- AssignGene(dist_consensus, method = "seuil", 0.7)
+View(res.list[[1]])
+
+```
+
+Fonction :
 
 ```{r}
 #' AssignGene
@@ -182,35 +184,6 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
 ```
 
 ```{r}
-
-```
-
-\
-Etape 2 bis : Comparaison des matrices entre elle
-
-```{r}
-#Code Nemo 
-```
-
-## Etape 3 : Obtention d'une matrice "robuste" unique consensus des matrices précédentes
-
-```{r}
-matrices <- list(as.matrix(asso_acm_eucli), as.matrix(asso_acm_manhattan), as.matrix(asso_origin_ochiai), as.matrix(asso_origin_sorensen))
-
-#Test poids egaux 
-poids <- c(0.25, 0.25, 0.25,0.25)
-#Test poids avec variance (diversite transcrit dans les distances)
-variances <- sapply(matrices, function(mat) var(as.vector(mat)))
-poids <- 1 / variances
-poids <- poids / sum(poids)
-
-mat_consensus<- Reduce(`+`, Map(`*`, matrices, poids))
-
-```
-
-Analyse de sensibilité aux poids
-
-```{r}
 matrice_consensus <- function(poids, matrices) {
   Reduce(`+`, Map(`*`, matrices, poids))
 }
@@ -249,19 +222,11 @@ ggplot(as.data.frame(sensitivity_results), aes(x = w1, y = w2, z = metric)) +
   labs(title = "Analyse de sensibilité des poids",
        x = "Poids pour Mat1", y = "Poids pour Mat2", fill = "Métrique") +
   theme_minimal()
-
 ```
 
-## Etape 4 : Etablissement du couplage MC x liste(gènes)
+Mise en place d'échantillonnage plus petit
 
-```{r}
-#Obtention de la matrice avec des "pourcentage de croyance" dans l'association 
-#Choix d'un seuil de confiance =
-#Obtention liste de gène 
-#
-
-res.list <- AssignGene(mat_consensus, method = "seuil", 0.7)
-View(res.list[[1]])
-
-res
+```{r} filtre_col<- function(data, num_colonnes) {   colonnes_selectionnees <- sample(colnames(data), num_colonnes)   data_selectionnee <- data[, colonnes_selectionnees, drop = FALSE]      result <- data[apply(data, 1, function(ligne) {     colonnes_avec_1 <- names(ligne)[ligne == 1] #Où sont les 1     return(all(colonnes_avec_1 %in% colnames(data_selectionnee)))   }), colonnes_selectionnees] #Ne recupére que les lignes correspondantes       return(result) }  dta_small_col <- filtre_col(new_full, 100)  # --------------------------------------------------------------------------    rownames(phecode)<-phecode[[1]] phecode <- phecode[-1]  filtre_ligne <- function(data_mc, data, num_lignes) {   lignes_selectionnees <- sample(1:nrow(data_mc), num_lignes)   lignes_noms <- rownames(data_mc)[lignes_selectionnees]     colonnes_avec_1 <- colnames(data)[apply(data[lignes_noms, ], 2, function(colonne) {     return(any(colonne == 1))   })]      result <- data[apply(data, 1, function(ligne) {          colonnes_avec_1_ligne <- names(ligne)[ligne == 1]     return(all(colonnes_avec_1_ligne %in% colonnes_avec_1))   }), colnames(data) %in% colonnes_avec_1, drop = FALSE]      return(result) }   dta_small_row <- filtre_lignes(phecode, new_full, 10)}
 ```
+
+## 
