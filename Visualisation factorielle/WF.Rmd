@@ -144,7 +144,7 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
       stop("Le seuil doit être compris entre 0 et 1")
     }
     flong_filtre <- flong %>% 
-      filter(distance<=s) %>% 
+      filter(distance>=s) %>% 
       group_by(mc) %>% 
       summarise( mc = mc, ms=ms, distance=distance, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
   } else if(method=='quantile'){
@@ -152,7 +152,7 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
       stop("Le quantile doit être compris entre 0 et 1")
     }
     flong_filtre <- flong %>% 
-      filter(distance<=quantile(distance,q))%>% 
+      filter(distance>=quantile(distance,q))%>% 
       group_by(mc) %>% 
       summarise( mc = mc, ms=ms, distance=distance, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
   } else{
@@ -182,8 +182,6 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
 ```
 
 ```{r}
-asso_origin_sorensen <- AssignGene(o_sorensen_mat)[[2]]
-asso_origin_ochiai <- AssignGene(o_ochiai_mat)[[2]]
 
 ```
 
@@ -198,20 +196,21 @@ Etape 2 bis : Comparaison des matrices entre elle
 
 ```{r}
 
-asso_acm_eucli <- association_wide_eucli
-asso_acm_manh <- association_wide_manhattan
-
+asso_acm_eucli <- as.matrix(asso_acm_eucli)
+asso_acm_manhattan <- as.matrix(asso_acm_manhattan)
+asso_origin_ochiai <- as.matrix(asso_origin_ochiai)
+asso_origin_sorensen <- as.matrix(asso_origin_sorensen)
 #Test poids egaux 
-poids <- c(0.25, 0.25)
-matrices <- list(asso_acm_eucli, asso_acm_manh, asso_origin_ochiai, asso_origin_sorensen)
+poids <- c(0.25, 0.25, 0.25,0.25)
+matrices <- list(asso_acm_eucli, asso_acm_manhattan, asso_origin_ochiai, asso_origin_sorensen)
 
 #Test poids avec variance (diversite transcrit dans les distances)
 variances <- sapply(matrices, function(mat) var(as.vector(mat)))
 poids <- 1 / variances
 poids <- poids / sum(poids)
 
-mat_consensus <- Reduce(`+`, Map(`*`, matrices, poids))
-
+mat_consensus_var <- Reduce(`+`, Map(`*`, matrices, poids))
+mat_consen
 ```
 
 Analyse de sensibilité aux poids
@@ -265,4 +264,7 @@ ggplot(as.data.frame(sensitivity_results), aes(x = w1, y = w2, z = metric)) +
 #Choix d'un seuil de confiance =
 #Obtention liste de gène 
 #
+
+res.list <- AssignGene(as.matrix(mat_consensus_var), method = "seuil", 0.51)
+View(res.list[[1]])
 ```
