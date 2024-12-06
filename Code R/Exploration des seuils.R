@@ -13,7 +13,9 @@ ls()
 #####################################################################################Distance euclidienne
 
 acm_eucli_df <- as.matrix(acm_eucli_df)
-
+View(acm_eucli_df)
+nom_col <- colnames(acm_eucli_df)
+nom_col
 ############################################################Approche globale sur tout le tableau
 
 # idée, méthode statistique Otsu, apprentissage supervisée SVM
@@ -132,7 +134,7 @@ library(reshape2)
 library(dplyr)
 library(stringr)
 
-# Transformation au formatlong
+# Transformation au format long
 View(acm_eucli_df)
 acm_eucli_df <- as.matrix(acm_eucli_df) #matrice des distances
 df_eucli <- melt(acm_eucli_df)
@@ -142,7 +144,7 @@ df_eucli$ms <- sapply(strsplit(as.character(df_eucli $ms), " "), `[`, 1)
 View(df_eucli)
 
 # Obtention du tableau pour le seuil global
-s_eucli <- 0.09 # obtenu avec le code précédent avec la méthode d'Otsu  
+s_eucli <- 0.02 # 0.09 obtenu avec le code précédent avec la méthode d'Otsu  
 df_filtre_eucli <- df_eucli %>% 
   group_by(mc) %>% 
   filter(distance<=s_eucli) %>%   
@@ -155,8 +157,9 @@ comptage <- df_filtre_eucli %>%
   mutate(nb_elements = str_count(ms, ";") + 1,
          ms = gsub("\\s*\\([^)]*\\)", "", ms)) 
 
-View(df_filtre_eucli)
 View(comptage)
+View(df_filtre_eucli)
+
 
 # Obtention du tableau pour le seuil individuel par ligne
 
@@ -209,7 +212,7 @@ df_manhattan$ms <- sapply(strsplit(as.character(df_manhattan$ms), " "), `[`, 1)
 
 # Obtention du tableau pour le seuil global
 # seuil_manhattan = 0,17 définit précédemment
-s_manhattan <- 0.012
+s_manhattan <- 0.04
 df_filtre_manhattan <- df_manhattan %>% 
   group_by(mc) %>% 
   filter(distance<=s_manhattan) %>%   
@@ -393,3 +396,12 @@ write.csv(association_wide, "asso_manhattan_individuel.csv", row.names = TRUE)
 write.csv(association_wide_eucli, "asso_euclidien_global.csv", row.names = TRUE)
 write.csv(association_wide_eucli_ligne, "asso_euclidien_individuel.csv", row.names = TRUE)
 write.csv(association_wide_manhattan, "asso_manhattan_global.csv", row.names = TRUE)
+
+library(ggplot2)
+
+asso_acm_eucli <- data.frame(ifelse(acm_eucli_df<=0.02,1,0))
+asso_acm_manhattan <- data.frame(ifelse(acm_manhattan_df<=0.04,1,0))
+save(asso_acm_manhattan,
+     file = "matrices_asso_euclidien_individuel.RData")
+save(asso_acm_eucli,
+     file = "matrices_asso_manhattan_global.RData")

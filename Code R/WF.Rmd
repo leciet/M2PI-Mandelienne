@@ -144,7 +144,7 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
       stop("Le seuil doit être compris entre 0 et 1")
     }
     flong_filtre <- flong %>% 
-      filter(distance<=s) %>% 
+      filter(distance>=s) %>% 
       group_by(mc) %>% 
       summarise( mc = mc, ms=ms, distance=distance, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
   } else if(method=='quantile'){
@@ -152,7 +152,7 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
       stop("Le quantile doit être compris entre 0 et 1")
     }
     flong_filtre <- flong %>% 
-      filter(distance<=quantile(distance,q))%>% 
+      filter(distance>=quantile(distance,q))%>% 
       group_by(mc) %>% 
       summarise( mc = mc, ms=ms, distance=distance, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
   } else{
@@ -182,8 +182,6 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
 ```
 
 ```{r}
-asso_origin_sorensen <- AssignGene(o_sorensen_mat)[[2]]
-asso_origin_ochiai <- AssignGene(o_ochiai_mat)[[2]]
 
 ```
 
@@ -197,19 +195,71 @@ Etape 2 bis : Comparaison des matrices entre elle
 ## Etape 3 : Obtention d'une matrice "robuste" unique consensus des matrices précédentes
 
 ```{r}
+matrices <- list(asso_acm_eucli, asso_acm_manhattan, asso_origin_ochiai, asso_origin_sorensen)
 
-asso_acm_eucli <- association_wide_eucli
-asso_acm_manh <- association_wide_manhattan
-poids <- c(0.25, 0.25, 0.25, 0.25)
-matrices <- list()
-mat_consensus <- Reduce(`+`, Map(`*`, matrices, poids))
+#Test poids egaux 
+poids <- c(0.25, 0.25, 0.25,0.25)
+#Test poids avec variance (diversite transcrit dans les distances)
+variances <- sapply(matrices, function(mat) var(as.vector(mat)))
+poids <- 1 / variances
+poids <- poids / sum(poids)
+
+mat_consensus<- Reduce(`+`, Map(`*`, matrices, poids))
+
+```
+
+Analyse de sensibilité aux poids
+
+```{r}
+matrice_consensus <- function(poids, matrices) {
+  Reduce(`+`, Map(`*`, matrices, poids))
+}
+
+evaluate_consensus <- function(matrice_consensus, reference) {
+  sum((matrice_consensus - reference)^2)
+}
+
+# Générer des combinaisons de poids
+grid_size <- 10  
+poids_grid <- expand.grid(seq(0, 1, length.out = grid_size),
+                            seq(0, 1, length.out = grid_size))
+
+# Filtrer les combinaisons où la somme des poids est proche de 1
+poids_grid <- weights_grid[rowSums(poids_grid) <= 1, ]
+poids_grid <- cbind(poids_grid, 1 - rowSums(poids_grid))
+colnames(wpoids_grid) <- paste0("w", 1:3)
+
+# Matrice de référence (par exemple, moyenne des matrices)
+reference <- Reduce(`+`, matrices) / length(matrices)
+
+# Analyse des résultats
+results <- apply(weights_grid, 1, function(poids) {
+  consensus <- compute_consensus(poids, matrices)
+  metric <- evaluate_consensus(matrice_consensus, reference)
+  metric
+})
+
+# Ajouter les résultats aux poids
+sensitivity_results <- cbind(poids_grid, metric = results)
+
+# Visualiser les résultats
+library(ggplot2)
+ggplot(as.data.frame(sensitivity_results), aes(x = w1, y = w2, z = metric)) +
+  geom_contour_filled() +
+  labs(title = "Analyse de sensibilité des poids",
+       x = "Poids pour Mat1", y = "Poids pour Mat2", fill = "Métrique") +
+  theme_minimal()
+
 ```
 
 ## Etape 4 : Etablissement du couplage MC x liste(gènes)
 
 ```{r}
 #Obtention de la matrice avec des "pourcentage de croyance" dans l'association 
-#Choix d'un seuil de confiance 
+#Choix d'un seuil de confiance =
 #Obtention liste de gène 
 #
+
+res.list <- AssignGene(as.matrix(mat_consensus), method = "seuil", 0.51)
+View(res.list[[1]])
 ```
