@@ -13,8 +13,8 @@ library(reshape)
 ### On travaille pour le moment sur la matrice originel avec la distance de 
 ### Sorensen
 
-load("Matrice d'association/distances_ochiai.RData")
-load("Matrice d'association/distances_orensen.RData")
+load("Data/distance_ochiai.RData")
+load("Data/distance_sorensen.RData")
 
 
 

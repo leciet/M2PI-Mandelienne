@@ -119,8 +119,6 @@ View(res.list[[1]])
 
 ```
 
-Fonction :
-
 ```{r}
 #' AssignGene
 #' @description
