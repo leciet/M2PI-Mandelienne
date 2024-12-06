@@ -117,7 +117,7 @@ o_ochiai <- matrice_ochiai[6126:7089,1:6125]
 o_ochiai_mat <- as.matrix(o_ochiai)
 ```
 
-## Etape 2 : Association des maladies entre elles à partir des distances, obtention d’un pool de matrices d’assignation
+## Etape 2 : Association des maladies entrse elles à partir des distances, obtention d’un pool de matrices d’assignation
 
 ```{r}
 #' AssignGene
