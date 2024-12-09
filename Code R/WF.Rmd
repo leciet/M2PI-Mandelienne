@@ -50,12 +50,12 @@ dta_dist <- rbind(actif, sup)
 
 
 dist_acm_eucli <- get_dist(dta_dist, method = "euclidean")
-dist_acm_eucli <- as.data.frame(as.matrix(acm_eucli))
-dist_acm_eucli_mx <-as.matrix(acm_eucli[6126:7089, 1:6125])
+dist_acm_eucli <- as.data.frame(as.matrix(dist_acm_eucli))
+dist_acm_eucli_mx <-as.matrix(dist_acm_eucli[6126:7089, 1:6125])
 
 dist_acm_manhattan<- get_dist(dta_dist, method = "manhattan")
-dist_acm_manhattan <- as.data.frame(as.matrix(acm_manhattan))
-dist_acm_manhattan_mx <- as.matrix(acm_manhattan[6126:7089, 1:6125])
+dist_acm_manhattan <- as.data.frame(as.matrix(dist_acm_manhattan))
+dist_acm_manhattan_mx <- as.matrix(dist_acm_manhattan[6126:7089, 1:6125])
 
 ```
 
