@@ -109,17 +109,6 @@ Etape 2 bis : Comparaison des matrices entre elle
 ## Etape 4 : Etablissement du couplage MC x liste(gènes)
 
 ```{r}
-#Obtention de la matrice avec des "pourcentage de croyance" dans l'association 
-#Choix d'un seuil de confiance =
-#Obtention liste de gène 
-#
-
-res.list <- AssignGene(dist_consensus, method = "seuil", 0.7)
-View(res.list[[1]])
-
-```
-
-```{r}
 #' AssignGene
 #' @description
 #' Assigne une liste de gènes à chaque maladie complexe, la matrice de distances a en colonne les ms et en ligne les mc
@@ -178,6 +167,17 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
   return(list(assign_liste,assign_matrice))
   
 }
+
+```
+
+```{r}
+#Obtention de la matrice avec des "pourcentage de croyance" dans l'association 
+#Choix d'un seuil de confiance =
+#Obtention liste de gène 
+#
+
+res.list <- AssignGene(dist_consensus, method = "seuil", 0.7)
+View(res.list[[1]])
 
 ```
 
