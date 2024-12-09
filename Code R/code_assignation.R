@@ -10,11 +10,58 @@ library(tidyverse)
 library(reshape)
 
 
+
+
 ### On travaille pour le moment sur la matrice originel avec la distance de 
 ### Sorensen
 
-load("Matrice d'association/distances_ochiai.RData")
-load("Matrice d'association/distances_orensen.RData")
+
+load("Data/distance_origin_ochiai.RData")
+load("Data/distance_origin_sorensen.RData")
+
+
+# Mise en forme
+dist_or_ochiai_df <- as.data.frame(dist_or_ochiai_mx)
+
+# Appliquer le test de Shapiro-Wilk à chaque ligne
+norm <- apply(dist_or_sorensen_mx, 1, function(row) {
+  ks.test(row, "pnorm", mean = mean(row), sd = sd(row))$p.value
+})
+norm <- as.data.frame(norm)
+
+
+# On n'a pas de distribution normale 
+# Pour passer outre on peut s'intérésser à la p value empirique
+
+compute_empirical_pvalues <- function(row) {
+  sapply(row, function(d) {
+    sum(row <= d) / length(row)  # Proportion de distances <= d
+  })
+}
+
+# Calculer les p-values empiriques pour chaque ligne
+empirical_pvalues <- t(apply(dist_or_sorensen_mx, 1, compute_empirical_pvalues))
+
+
+# Sélection des gènes avec un seuil de p-value
+alpha <- 0.05
+selected_genes <- data.frame(ifelse(empirical_pvalues<=alpha,1,0))
+
+selected_genes_long <- melt(as.matrix(selected_genes))
+colnames(selected_genes_long) <- c("mc", "ms", "assignation")
+
+selected_genes_long <- selected_genes_long %>% 
+  filter(assignation == 1) %>% 
+  group_by(mc) %>% 
+  summarise( mc = mc, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
+
+selected_genes_liste <- as.data.frame(unique(selected_genes_long))
+
+
+print("Empirical p-values:")
+print(empirical_pvalues)
+print("Selected genes:")
+print(selected_genes)
 
 
 
