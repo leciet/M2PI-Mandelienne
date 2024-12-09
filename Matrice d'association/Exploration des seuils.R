@@ -402,6 +402,6 @@ library(ggplot2)
 asso_acm_eucli <- data.frame(ifelse(acm_eucli_df<=0.02,1,0))
 asso_acm_manhattan <- data.frame(ifelse(acm_manhattan_df<=0.04,1,0))
 save(asso_acm_manhattan,
-     file = "matrices_asso_euclidien_individuel.RData")
+     file = "asso_acm_manhattan.RData")
 save(asso_acm_eucli,
-     file = "matrices_asso_manhattan_global.RData")
+     file = "asso_acm_eucli.RData")
