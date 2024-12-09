@@ -13,52 +13,13 @@ library(reshape)
 ### On travaille pour le moment sur la matrice originel avec la distance de 
 ### Sorensen
 
-load("Data/distance_origin_ochiai.RData")
-load("Data/distance_origin_sorensen.RData")
+load("Matrice d'association/distances_ochiai.RData")
+load("Matrice d'association/distances_orensen.RData")
 
 
-# Mise en forme
-dist_or_ochiai_df <- as.data.frame(dist_or_ochiai_mx)
-
-# Appliquer le test de Shapiro-Wilk à chaque ligne
-norm <- apply(dist_or_sorensen_mx, 1, function(row) {
-  ks.test(row, "pnorm", mean = mean(row), sd = sd(row))$p.value
-})
-norm <- as.data.frame(norm)
 
 
-# On n'a pas de distribution normale 
-# Pour passer outre on peut s'intérésser à la p value empirique
 
-compute_empirical_pvalues <- function(row) {
-  sapply(row, function(d) {
-    sum(row <= d) / length(row)  # Proportion de distances <= d
-  })
-}
-
-# Calculer les p-values empiriques pour chaque ligne
-empirical_pvalues <- t(apply(dist_or_sorensen_mx, 1, compute_empirical_pvalues))
-
-plot <- empirical_pvalues %>%
-  
-  mutate(distance=ifelse(distance!=0,1,0)) %>% 
-  ggplot( aes(x = ms, y = mc, fill = distance)) +
-  geom_tile() +
-  scale_fill_gradient(low = "pink2", high = "firebrick") +
-  labs(title = "Matrice d'Association", x = "MS", y = "MC", fill = "Distance")+
-  theme(axis.text.x = element_text(angle = 30,size = 2),
-        axis.text.y = element_text(size=3))
-print(plot)
-
-
-# Sélection des gènes avec un seuil de p-value
-alpha <- 0.05
-selected_genes <- apply(empirical_pvalues, 1, function(row) which(row <= alpha))
-
-print("Empirical p-values:")
-print(empirical_pvalues)
-print("Selected genes:")
-print(selected_genes)
 
 # Création de fonctions
 
