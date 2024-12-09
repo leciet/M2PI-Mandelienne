@@ -1,0 +1,230 @@
+---
+title: "Work flow"
+author: "Sara Larcher"
+date: "2024-12-03"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+Téléchargement de la data-base propre. Les actions effectuées dessus
+sont les suivantes:
+
+-   Association des deux tableaux MS et MC en lignes et phénotypes en
+    colonnes
+
+-   Suppression des maladies n'ayant aucun phenotype observe
+
+-   Vérification de la variabilité par colonnes sur les tableaux simples
+    (MS/MC) et sur le tableau total
+
+Le jeu de données utilisé est new_full.\
+Ce jeu de données supprime deux maladies complexes n'ayant pas de
+variabilité dans leurs phénotypes (0 pour l'ensemble des phénotypes)
+
+```{r setup, include=FALSE}
+library(FactoMineR)
+library(factoextra)
+library(ade4) 
+library(tidyverse)
+library(reshape)
+
+load("data_clean.RData")
+```
+
+## Etape 1 : Application et obtention des matrices de distances
+
+#### a) A partir d'une ACM
+
+Nous suivons la convention suivant
+*`origine des données_type de distance_type d'objet.`* Les objets sont
+stockés dans le dossier "Objets R" et peuvent être load directement.
+
+```{r cars}
+mandale <- readRDS("~/R/M2PI-Mendelienne/Visualisation factorielle/mandale.rds")
+
+actif <- mandale$ind$coord
+sup <- mandale$ind.sup$coord
+dta_dist <- rbind(actif, sup)
+
+
+dist_acm_eucli <- get_dist(dta_dist, method = "euclidean")
+dist_acm_eucli <- as.data.frame(as.matrix(acm_eucli))
+dist_acm_eucli_mx <-as.matrix(acm_eucli[6126:7089, 1:6125])
+
+dist_acm_manhattan<- get_dist(dta_dist, method = "manhattan")
+dist_acm_manhattan <- as.data.frame(as.matrix(acm_manhattan))
+dist_acm_manhattan_mx <- as.matrix(acm_manhattan[6126:7089, 1:6125])
+
+```
+
+#### b) A partir de la matrice d'origine
+
+```{r}
+dist_or_sorensen_mx <- dist.binary(new_full,method = 5) #Long 
+dist_or_sorensen_mx <- as.data.frame(as.matrix(origin_sorensen))
+dist_or_sorensen_mx<- matrice_sorensen[6126:7089,1:6125]
+dist_or_sorensen_mx<- as.matrix(o_sorensen)
+
+dist_or_ochiai_mx<- dist.binary(new_full,method = 7)
+dist_or_ochiai_mx <- as.data.frame(as.matrix(origin_ochiai))
+dist_or_ochiai_mx  <- matrice_ochiai[6126:7089,1:6125]
+dist_or_ochiai_mx  <- as.matrix(o_ochiai)
+```
+
+## Etape 2 : Obtention d'une matrice de distance consensus
+
+```{r}
+matrices <- list(dist_acm_eucli_mx, dist_acm_manhattan_mx, dist_or_ochiai_mx,dist_or_sorensen_mx)
+
+#Test poids egaux 
+poids <- c(0.25, 0.25, 0.25,0.25)
+#Test poids avec variance (diversite transcrit dans les distances)
+variances <- sapply(matrices, function(mat) var(as.vector(mat)))
+poids <- 1 / variances
+poids <- poids / sum(poids)
+
+dist_consensus <- Reduce(`+`, Map(`*`, matrices, poids))
+```
+
+```{r}
+
+```
+
+\
+Etape 2 bis : Comparaison des matrices entre elle
+
+```{r}
+#Code Nemo 
+```
+
+## Etape 3 : Obtention d'une matrice "robuste" d'assignation 
+
+```{r}
+
+
+```
+
+## Etape 4 : Etablissement du couplage MC x liste(gènes)
+
+```{r}
+#Obtention de la matrice avec des "pourcentage de croyance" dans l'association 
+#Choix d'un seuil de confiance =
+#Obtention liste de gène 
+#
+
+res.list <- AssignGene(dist_consensus, method = "seuil", 0.7)
+View(res.list[[1]])
+
+```
+
+```{r}
+#' AssignGene
+#' @description
+#' Assigne une liste de gènes à chaque maladie complexe, la matrice de distances a en colonne les ms et en ligne les mc
+#'
+#' @param dist objet  matrix correspondant à la matrice de distances
+#' @param method 'seuil' ou 'quantile' pour le critère d'association
+#' @param s paramètre pour la méthode seuil
+#' @param q paramètre pour la méthode quantile
+#' @param graph si TRUE affiche la matrice d'association
+#'
+#' @return une liste contenant 2 objets correspondant à l'assignation d'une liste de gènes par maladie et la matrice d'assignation
+#' @export
+#'
+#' @examples
+AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE){
+  # Conversion de la matrice en format long
+  flong <- melt(dist)
+  colnames(flong) <- c("mc", "ms", "distance")
+  
+  if(method=='seuil'){
+    if (s<0 | s>1) {
+      stop("Le seuil doit être compris entre 0 et 1")
+    }
+    flong_filtre <- flong %>% 
+      filter(distance>=s) %>% 
+      group_by(mc) %>% 
+      summarise( mc = mc, ms=ms, distance=distance, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
+  } else if(method=='quantile'){
+    if (q<0 | q>1) {
+      stop("Le quantile doit être compris entre 0 et 1")
+    }
+    flong_filtre <- flong %>% 
+      filter(distance>=quantile(distance,q))%>% 
+      group_by(mc) %>% 
+      summarise( mc = mc, ms=ms, distance=distance, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
+  } else{
+    stop('méthode non reconnue')
+  }
+  assign_liste <- unique(flong_filtre[,c(1,4)])
+  assign_matrice <-  flong_filtre[,1:3] %>% 
+    mutate(distance=ifelse(distance!=0,1,0)) %>% 
+    pivot_wider(names_from = ms,values_from = distance) 
+  
+  if(graph==TRUE){
+    plot <- flong_filtre %>% 
+      mutate(distance=ifelse(distance!=0,1,0)) %>% 
+      ggplot( aes(x = ms, y = mc, fill = distance)) +
+        geom_tile() +
+        scale_fill_gradient(low = "pink2", high = "firebrick") +
+        labs(title = "Matrice d'Association", x = "MS", y = "MC", fill = "Distance")+
+        theme(axis.text.x = element_text(angle = 30,size = 2),
+            axis.text.y = element_text(size=3))
+    print(plot)
+  }
+  
+  return(list(assign_liste,assign_matrice))
+  
+}
+
+```
+
+```{r}
+matrice_consensus <- function(poids, matrices) {
+  Reduce(`+`, Map(`*`, matrices, poids))
+}
+
+evaluate_consensus <- function(matrice_consensus, reference) {
+  sum((matrice_consensus - reference)^2)
+}
+
+# Générer des combinaisons de poids
+grid_size <- 10  
+poids_grid <- expand.grid(seq(0, 1, length.out = grid_size),
+                            seq(0, 1, length.out = grid_size))
+
+# Filtrer les combinaisons où la somme des poids est proche de 1
+poids_grid <- weights_grid[rowSums(poids_grid) <= 1, ]
+poids_grid <- cbind(poids_grid, 1 - rowSums(poids_grid))
+colnames(wpoids_grid) <- paste0("w", 1:3)
+
+# Matrice de référence (par exemple, moyenne des matrices)
+reference <- Reduce(`+`, matrices) / length(matrices)
+
+# Analyse des résultats
+results <- apply(weights_grid, 1, function(poids) {
+  consensus <- compute_consensus(poids, matrices)
+  metric <- evaluate_consensus(matrice_consensus, reference)
+  metric
+})
+
+# Ajouter les résultats aux poids
+sensitivity_results <- cbind(poids_grid, metric = results)
+
+# Visualiser les résultats
+library(ggplot2)
+ggplot(as.data.frame(sensitivity_results), aes(x = w1, y = w2, z = metric)) +
+  geom_contour_filled() +
+  labs(title = "Analyse de sensibilité des poids",
+       x = "Poids pour Mat1", y = "Poids pour Mat2", fill = "Métrique") +
+  theme_minimal()
+```
+
+Mise en place d'échantillonnage plus petit
+
+```{r} filtre_col<- function(data, num_colonnes) {   colonnes_selectionnees <- sample(colnames(data), num_colonnes)   data_selectionnee <- data[, colonnes_selectionnees, drop = FALSE]      result <- data[apply(data, 1, function(ligne) {     colonnes_avec_1 <- names(ligne)[ligne == 1] #Où sont les 1     return(all(colonnes_avec_1 %in% colnames(data_selectionnee)))   }), colonnes_selectionnees] #Ne recupére que les lignes correspondantes       return(result) }  dta_small_col <- filtre_col(new_full, 100)  # --------------------------------------------------------------------------    rownames(phecode)<-phecode[[1]] phecode <- phecode[-1]  filtre_ligne <- function(data_mc, data, num_lignes) {   lignes_selectionnees <- sample(1:nrow(data_mc), num_lignes)   lignes_noms <- rownames(data_mc)[lignes_selectionnees]     colonnes_avec_1 <- colnames(data)[apply(data[lignes_noms, ], 2, function(colonne) {     return(any(colonne == 1))   })]      result <- data[apply(data, 1, function(ligne) {          colonnes_avec_1_ligne <- names(ligne)[ligne == 1]     return(all(colonnes_avec_1_ligne %in% colonnes_avec_1))   }), colnames(data) %in% colonnes_avec_1, drop = FALSE]      return(result) }   dta_small_row <- filtre_lignes(phecode, new_full, 10)}
+```
+
+## 
