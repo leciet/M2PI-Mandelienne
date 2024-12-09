@@ -41,21 +41,22 @@ compute_empirical_pvalues <- function(row) {
 
 # Calculer les p-values empiriques pour chaque ligne
 empirical_pvalues <- t(apply(dist_or_sorensen_mx, 1, compute_empirical_pvalues))
-plot <- empirical_pvalues %>%
-  
-  mutate(distance=ifelse(distance!=0,1,0)) %>% 
-  ggplot( aes(x = ms, y = mc, fill = distance)) +
-  geom_tile() +
-  scale_fill_gradient(low = "pink2", high = "firebrick") +
-  labs(title = "Matrice d'Association", x = "MS", y = "MC", fill = "Distance")+
-  theme(axis.text.x = element_text(angle = 30,size = 2),
-        axis.text.y = element_text(size=3))
-print(plot)
 
 
 # Sélection des gènes avec un seuil de p-value
 alpha <- 0.05
-selected_genes <- apply(empirical_pvalues, 1, function(row) which(row <= alpha))
+selected_genes <- data.frame(ifelse(empirical_pvalues<=alpha,1,0))
+
+selected_genes_long <- melt(as.matrix(selected_genes))
+colnames(selected_genes_long) <- c("mc", "ms", "assignation")
+
+selected_genes_long <- selected_genes_long %>% 
+  filter(assignation == 1) %>% 
+  group_by(mc) %>% 
+  summarise( mc = mc, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
+
+selected_genes_liste <- as.data.frame(unique(selected_genes_long))
+
 
 print("Empirical p-values:")
 print(empirical_pvalues)
