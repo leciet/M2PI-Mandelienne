@@ -181,6 +181,8 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
 
 ```
 
+Analyse en cours de test des poids 
+
 ```{r}
 matrice_consensus <- function(poids, matrices) {
   Reduce(`+`, Map(`*`, matrices, poids))
