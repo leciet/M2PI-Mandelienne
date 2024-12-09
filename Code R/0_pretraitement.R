@@ -43,3 +43,7 @@ save(or_df0,omim,phecode,file='Data/data_clean0.RData')
 # checker pour la variabilité 
 
 
+or_filter_df0 <- or_df0 %>% 
+  filter(rowSums(or_df0)!=0)
+
+
