@@ -174,7 +174,7 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
 
 ```
 
-Analyse en cours de test des poids 
+
 
 ```{r}
 #Obtention de la matrice avec des "pourcentage de croyance" dans l'association 
@@ -187,13 +187,15 @@ View(res.list[[1]])
 
 ```
 
+Analyse en cours de test des poids 
+
 ```{r}
-matrice_consensus <- function(poids, matrices) {
+dist_consensus <- function(poids, matrices) {
   Reduce(`+`, Map(`*`, matrices, poids))
 }
 
-evaluate_consensus <- function(matrice_consensus, reference) {
-  sum((matrice_consensus - reference)^2)
+evaluate_consensus <- function(dist_consensus, reference) {
+  sum((dist_consensus - reference)^2)
 }
 
 # Générer des combinaisons de poids
@@ -212,7 +214,7 @@ reference <- Reduce(`+`, matrices) / length(matrices)
 # Analyse des résultats
 results <- apply(weights_grid, 1, function(poids) {
   consensus <- compute_consensus(poids, matrices)
-  metric <- evaluate_consensus(matrice_consensus, reference)
+  metric <- evaluate_consensus(dist_consensus, reference)
   metric
 })
 
@@ -228,9 +230,45 @@ ggplot(as.data.frame(sensitivity_results), aes(x = w1, y = w2, z = metric)) +
   theme_minimal()
 ```
 
-Mise en place d'échantillonnage plus petit
+Mise en place d'échantillonnage plus petit (pas bon en cours)
 
-```{r} filtre_col<- function(data, num_colonnes) {   colonnes_selectionnees <- sample(colnames(data), num_colonnes)   data_selectionnee <- data[, colonnes_selectionnees, drop = FALSE]      result <- data[apply(data, 1, function(ligne) {     colonnes_avec_1 <- names(ligne)[ligne == 1] #Où sont les 1     return(all(colonnes_avec_1 %in% colnames(data_selectionnee)))   }), colonnes_selectionnees] #Ne recupére que les lignes correspondantes       return(result) }  dta_small_col <- filtre_col(new_full, 100)  # --------------------------------------------------------------------------    rownames(phecode)<-phecode[[1]] phecode <- phecode[-1]  filtre_ligne <- function(data_mc, data, num_lignes) {   lignes_selectionnees <- sample(1:nrow(data_mc), num_lignes)   lignes_noms <- rownames(data_mc)[lignes_selectionnees]     colonnes_avec_1 <- colnames(data)[apply(data[lignes_noms, ], 2, function(colonne) {     return(any(colonne == 1))   })]      result <- data[apply(data, 1, function(ligne) {          colonnes_avec_1_ligne <- names(ligne)[ligne == 1]     return(all(colonnes_avec_1_ligne %in% colonnes_avec_1))   }), colnames(data) %in% colonnes_avec_1, drop = FALSE]      return(result) }   dta_small_row <- filtre_lignes(phecode, new_full, 10)}
+```{r} 
+filtre_col <- function(data, num_colonnes) {
+  colonnes_selectionnees <- sample(colnames(data), num_colonnes)
+  data_selectionnee <- data[, colonnes_selectionnees, drop = FALSE]
+  
+  result <- data[apply(data, 1, function(ligne) { 
+    colonnes_avec_1 <- names(ligne)[ligne == 1]
+    return(all(colonnes_avec_1 %in% colnames(data_selectionnee)))
+  }), colonnes_selectionnees, drop = FALSE]
+  
+  return(result)
+}
+
+dta_small_col <- filtre_col(new_full, 100)
+
+# Traitement sur phecode
+rownames(phecode) <- phecode[[1]]
+phecode <- phecode[-1]
+
+filtre_ligne <- function(data_mc, data, num_lignes) {
+  lignes_selectionnees <- sample(1:nrow(data_mc), num_lignes)
+  lignes_noms <- rownames(data_mc)[lignes_selectionnees]
+  
+  colonnes_avec_1 <- colnames(data)[apply(data[lignes_noms, ], 2, function(colonne) {
+    return(any(colonne == 1))
+  })]
+  
+  result <- data[apply(data, 1, function(ligne) {
+    colonnes_avec_1_ligne <- names(ligne)[ligne == 1]
+    return(all(colonnes_avec_1_ligne %in% colonnes_avec_1))
+  }), colnames(data) %in% colonnes_avec_1, drop = FALSE]
+  
+  return(result)
+}
+
+dta_small_row <- filtre_ligne(phecode, new_full, 10)
+
 ```
 
 ## 
