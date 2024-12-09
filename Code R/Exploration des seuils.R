@@ -1,14 +1,16 @@
+# Nemo Didier
+# /12/2024
+# Seuil pour les matrices d'assignation post acm 
+# ------------------------------------------------------------------------------
+
 # Espace de travail
 rm(list = ls())
-setwd('C:/Users/nemod/OneDrive/Documents/S9_ACO/Projet 2 mois/M2PI-Mendelienne/Visualisation factorielle')
-fichiers_rdata <- list.files(pattern = "\\.RData$")
+
+# Importation des données s
+fichiers_rdata <- list.files(path = 'Data',pattern = "\\.RData$")
 for (fichier in fichiers_rdata) {
-  load(fichier)
+  load(paste('Data/',fichier,sep = ''))
 }
-rm(data_full)
-rm(fichier)
-rm(fichiers_rdata)
-ls()
 
 #####################################################################################Distance euclidienne
 
