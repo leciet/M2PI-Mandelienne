@@ -44,7 +44,7 @@ empirical_pvalues <- t(apply(dist_or_sorensen_mx, 1, compute_empirical_pvalues))
 
 
 # Sélection des gènes avec un seuil de p-value
-alpha <- 0.05
+alpha <- 0.005
 selected_genes <- data.frame(ifelse(empirical_pvalues<=alpha,1,0))
 
 selected_genes_long <- melt(as.matrix(selected_genes))
@@ -139,7 +139,7 @@ o_sorensen <- matrice_sorensen[6126:7089,1:6125] #dataframe de la matrice des di
 
 o_sorensen_mat <- as.matrix(o_sorensen) #matrice des distances
 
-asso_origin_sorensen <- AssignGene(o_sorensen_mat,method = 'seuil',s = 0.84)[[2]]
+test <- AssignGene(dist_or_sorensen_mx,method = 'seuil',s = 0.84)
 
 test1 <- as.data.frame(test[[1]])
 test2 <- as.data.frame(test[[2]])
@@ -161,7 +161,7 @@ asso_origin_ochiai <- o_ochiai
 asso_origin_ochiai <- data.frame(ifelse(asso_origin_ochiai<=0.84,1,0))
 
 asso_origin_sorensen <- o_sorensen
-asso_origin_sorensen <- data.frame(ifelse(asso_origin_sorensen<=0.84,1,0))
+asso_origin_sorensen <- data.frame(ifelse(dist_or_sorensen_mx<=0.84,1,0))
 
 save(asso_origin_ochiai,asso_origin_sorensen,file="Matrice d'association/asso_origin.RData")
 
