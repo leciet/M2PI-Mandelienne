@@ -80,6 +80,7 @@ dist_or_ochiai_mx  <- as.matrix(dist_or_ochiai)
 ## Etape 2 : Standardisation des matrices de distance et obtention d'une matrice de distance consensus
 
 Obtention de la matrice consensus
+
 ```{r}
 max(dist_acm_eucli_mx)
 max(dist_acm_manhattan_mx)
@@ -109,6 +110,7 @@ range(dist_acm_manhattan_minmax)
 ```
 
 Obtention de la matrice consensus
+
 ```{r}
 matrices <- list(dist_acm_eucli_minmax, dist_acm_manhattan_minmax, dist_or_ochiai_mx,dist_or_sorensen_mx)
 
@@ -135,10 +137,12 @@ Etape 2 bis : Comparaison des matrices entre elle
 #Code Nemo 
 ```
 
-## Etape 3 : Obtention d'une matrice "robuste" d'assignation 
+## Etape 3 : Obtention d'une matrice "robuste" d'assignation
 
-Détermination de l'existence d'une association entre gènes et maladies complexes
-Méthode p-value empirique : n'a pas besoin que la distribution de nos maladies complexes soient normales
+Détermination de l'existence d'une association entre gènes et maladies
+complexes Méthode p-value empirique : n'a pas besoin que la distribution
+de nos maladies complexes soient normales
+
 ```{r}
 compute_empirical_pvalues <- function(row) {
   sapply(row, function(d) {
@@ -199,18 +203,6 @@ significant_genes <- which(mean_pvalues[1, ] <= 0.05)  # Gènes avec p-value moy
 
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
 
 ## Etape 4 : Etablissement du couplage MC x liste(gènes)
 
@@ -277,6 +269,7 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
 ```
 
 1ère méthode : méthode classique d'assignation avec seuil ou quantile
+
 ```{r}
 #Obtention de la matrice avec des "pourcentage de croyance" dans l'association 
 #Choix d'un seuil de confiance =
@@ -288,93 +281,132 @@ View(res.list[[1]])
 
 ```
 
+Analyse en cours de test des poids
 
-
-
-
-
-<!-- Analyse en cours de test des poids  -->
+```{r}
+ -->
 
 <!-- ```{r} -->
+
 <!-- dist_consensus <- function(poids, matrices) { -->
+
 <!--   Reduce(`+`, Map(`*`, matrices, poids)) -->
+
 <!-- } -->
 
 <!-- evaluate_consensus <- function(dist_consensus, reference) { -->
+
 <!--   sum((dist_consensus - reference)^2) -->
+
 <!-- } -->
 
 <!-- # Générer des combinaisons de poids -->
+
 <!-- grid_size <- 10   -->
+
 <!-- poids_grid <- expand.grid(seq(0, 1, length.out = grid_size), -->
+
 <!--                             seq(0, 1, length.out = grid_size)) -->
 
 <!-- # Filtrer les combinaisons où la somme des poids est proche de 1 -->
+
 <!-- poids_grid <- weights_grid[rowSums(poids_grid) <= 1, ] -->
+
 <!-- poids_grid <- cbind(poids_grid, 1 - rowSums(poids_grid)) -->
+
 <!-- colnames(wpoids_grid) <- paste0("w", 1:3) -->
 
 <!-- # Matrice de référence (par exemple, moyenne des matrices) -->
+
 <!-- reference <- Reduce(`+`, matrices) / length(matrices) -->
 
 <!-- # Analyse des résultats -->
+
 <!-- results <- apply(weights_grid, 1, function(poids) { -->
+
 <!--   consensus <- compute_consensus(poids, matrices) -->
+
 <!--   metric <- evaluate_consensus(dist_consensus, reference) -->
+
 <!--   metric -->
+
 <!-- }) -->
 
 <!-- # Ajouter les résultats aux poids -->
+
 <!-- sensitivity_results <- cbind(poids_grid, metric = results) -->
 
 <!-- # Visualiser les résultats -->
+
 <!-- library(ggplot2) -->
+
 <!-- ggplot(as.data.frame(sensitivity_results), aes(x = w1, y = w2, z = metric)) + -->
+
 <!--   geom_contour_filled() + -->
+
 <!--   labs(title = "Analyse de sensibilité des poids", -->
+
 <!--        x = "Poids pour Mat1", y = "Poids pour Mat2", fill = "Métrique") + -->
+
 <!--   theme_minimal() -->
+
 <!-- ``` -->
 
 <!-- Mise en place d'échantillonnage plus petit (pas bon en cours) -->
 
 <!-- ```{r}  -->
+
 <!-- filtre_col <- function(data, num_colonnes) { -->
+
 <!--   colonnes_selectionnees <- sample(colnames(data), num_colonnes) -->
+
 <!--   data_selectionnee <- data[, colonnes_selectionnees, drop = FALSE] -->
 
 <!--   result <- data[apply(data, 1, function(ligne) {  -->
+
 <!--     colonnes_avec_1 <- names(ligne)[ligne == 1] -->
+
 <!--     return(all(colonnes_avec_1 %in% colnames(data_selectionnee))) -->
+
 <!--   }), colonnes_selectionnees, drop = FALSE] -->
 
 <!--   return(result) -->
+
 <!-- } -->
 
 <!-- dta_small_col <- filtre_col(new_full, 100) -->
 
 <!-- # Traitement sur phecode -->
+
 <!-- rownames(phecode) <- phecode[[1]] -->
+
 <!-- phecode <- phecode[-1] -->
 
 <!-- filtre_ligne <- function(data_mc, data, num_lignes) { -->
+
 <!--   lignes_selectionnees <- sample(1:nrow(data_mc), num_lignes) -->
+
 <!--   lignes_noms <- rownames(data_mc)[lignes_selectionnees] -->
 
 <!--   colonnes_avec_1 <- colnames(data)[apply(data[lignes_noms, ], 2, function(colonne) { -->
+
 <!--     return(any(colonne == 1)) -->
+
 <!--   })] -->
 
 <!--   result <- data[apply(data, 1, function(ligne) { -->
+
 <!--     colonnes_avec_1_ligne <- names(ligne)[ligne == 1] -->
+
 <!--     return(all(colonnes_avec_1_ligne %in% colonnes_avec_1)) -->
+
 <!--   }), colnames(data) %in% colonnes_avec_1, drop = FALSE] -->
 
 <!--   return(result) -->
+
 <!-- } -->
 
 <!-- dta_small_row <- filtre_ligne(phecode, new_full, 10) -->
 
 <!-- ``` -->
-
-## 
+```
