@@ -77,10 +77,40 @@ dist_or_ochiai  <- dist_or_ochiai[6126:7089,1:6125]
 dist_or_ochiai_mx  <- as.matrix(dist_or_ochiai)
 ```
 
-## Etape 2 : Obtention d'une matrice de distance consensus
+## Etape 2 : Standardisation des matrices de distance et obtention d'une matrice de distance consensus
 
+Obtention de la matrice consensus
 ```{r}
-matrices <- list(dist_acm_eucli_mx, dist_acm_manhattan_mx, dist_or_ochiai_mx,dist_or_sorensen_mx)
+max(dist_acm_eucli_mx)
+max(dist_acm_manhattan_mx)
+max(dist_or_ochiai_mx)
+max(dist_or_sorensen_mx)
+
+min(dist_acm_eucli_mx)
+min(dist_acm_manhattan_mx)
+min(dist_or_ochiai_mx)
+min(dist_or_sorensen_mx)
+
+# Fonction de normalisation Min-Max
+min_max_normalize <- function(matrix) {
+  (matrix - min(matrix)) / (max(matrix) - min(matrix))
+}
+
+# Appliquer Min-Max aux matrices
+dist_acm_eucli_minmax <- min_max_normalize(dist_acm_eucli_mx)
+dist_acm_manhattan_minmax <- min_max_normalize(dist_acm_manhattan_mx)
+
+# Vérification des plages pour Ochiai et Sorensen
+range(dist_or_ochiai_mx)   # Doit être [0, 1]
+range(dist_or_sorensen_mx) # Doit être [0, 1]
+range(dist_acm_eucli_minmax)
+range(dist_acm_manhattan_minmax)
+
+```
+
+Obtention de la matrice consensus
+```{r}
+matrices <- list(dist_acm_eucli_minmax, dist_acm_manhattan_minmax, dist_or_ochiai_mx,dist_or_sorensen_mx)
 
 #Test poids egaux 
 poids <- c(0.25, 0.25, 0.25,0.25)
@@ -90,6 +120,8 @@ poids <- 1 / variances
 poids <- poids / sum(poids)
 
 dist_consensus <- Reduce(`+`, Map(`*`, matrices, poids))
+str(dist_consensus)
+
 ```
 
 ```{r}
@@ -105,10 +137,80 @@ Etape 2 bis : Comparaison des matrices entre elle
 
 ## Etape 3 : Obtention d'une matrice "robuste" d'assignation 
 
+Détermination de l'existence d'une association entre gènes et maladies complexes
+Méthode p-value empirique : n'a pas besoin que la distribution de nos maladies complexes soient normales
 ```{r}
+compute_empirical_pvalues <- function(row) {
+  sapply(row, function(d) {
+    sum(row <= d) / length(row)  # Proportion de distances <= d
+  })
+}
+
+# Calculer les p-values empiriques pour chaque ligne
+empirical_pvalues <- t(apply(dist_consensus, 1, compute_empirical_pvalues))
+View(empirical_pvalues)
+
+# Sélection des gènes avec un seuil de p-value
+alpha <- 0.01
+selected_genes <- data.frame(ifelse(empirical_pvalues<=alpha,1,0))
+
+selected_genes <- as.matrix(selected_genes) 
+View(selected_genes)
+View(rowSums(selected_genes))
+
+heatmap(
+  selected_genes,
+  col = c("white", "black"),
+  scale = "none",
+  Rowv = NA,
+  Colv = NA,
+  main = "P-value empirique"
+)
+
+```
+
+```{r}
+compute_empirical_pvalues <- function(row) {
+  sapply(row, function(d) {
+    sum(row <= d) / length(row)  # Proportion de distances <= d
+  })
+}
+
+set.seed(42)  
+n_bootstrap <- 1000
+# Matrice pour stocker les p-values bootstrap
+bootstrap_pvalues <- array(NA, dim = c(nrow(dist_consensus), ncol(dist_consensus), n_bootstrap))
+for (b in 1:n_bootstrap) {
+  # Échantillon bootstrap (avec remise)
+  bootstrap_sample <- dist_consensus[sample(1:nrow(dist_consensus), replace = TRUE), ]
+  # Calcul des p-values empiriques pour l'échantillon bootstrap
+  for (i in 1:nrow(bootstrap_sample)) {
+    bootstrap_pvalues[i, , b] <- compute_empirical_pvalues(bootstrap_sample[i, ])
+  }
+}
+# Calcul de la p-value moyenne pour chaque maladie et chaque gène
+mean_pvalues <- apply(bootstrap_pvalues, c(1, 2), mean)
+# Calcul de l'écart-type des p-values (pour évaluer la variabilité)
+std_pvalues <- apply(bootstrap_pvalues, c(1, 2), sd)
+
+# Exemple : Filtrer les gènes significatifs pour une maladie donnée
+significant_genes <- which(mean_pvalues[1, ] <= 0.05)  # Gènes avec p-value moyenne <= 0.05
+
 
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Etape 4 : Etablissement du couplage MC x liste(gènes)
 
@@ -174,8 +276,7 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
 
 ```
 
-
-
+1ère méthode : méthode classique d'assignation avec seuil ou quantile
 ```{r}
 #Obtention de la matrice avec des "pourcentage de croyance" dans l'association 
 #Choix d'un seuil de confiance =
@@ -187,88 +288,93 @@ View(res.list[[1]])
 
 ```
 
-Analyse en cours de test des poids 
 
-```{r}
-dist_consensus <- function(poids, matrices) {
-  Reduce(`+`, Map(`*`, matrices, poids))
-}
 
-evaluate_consensus <- function(dist_consensus, reference) {
-  sum((dist_consensus - reference)^2)
-}
 
-# Générer des combinaisons de poids
-grid_size <- 10  
-poids_grid <- expand.grid(seq(0, 1, length.out = grid_size),
-                            seq(0, 1, length.out = grid_size))
 
-# Filtrer les combinaisons où la somme des poids est proche de 1
-poids_grid <- weights_grid[rowSums(poids_grid) <= 1, ]
-poids_grid <- cbind(poids_grid, 1 - rowSums(poids_grid))
-colnames(wpoids_grid) <- paste0("w", 1:3)
 
-# Matrice de référence (par exemple, moyenne des matrices)
-reference <- Reduce(`+`, matrices) / length(matrices)
+<!-- Analyse en cours de test des poids  -->
 
-# Analyse des résultats
-results <- apply(weights_grid, 1, function(poids) {
-  consensus <- compute_consensus(poids, matrices)
-  metric <- evaluate_consensus(dist_consensus, reference)
-  metric
-})
+<!-- ```{r} -->
+<!-- dist_consensus <- function(poids, matrices) { -->
+<!--   Reduce(`+`, Map(`*`, matrices, poids)) -->
+<!-- } -->
 
-# Ajouter les résultats aux poids
-sensitivity_results <- cbind(poids_grid, metric = results)
+<!-- evaluate_consensus <- function(dist_consensus, reference) { -->
+<!--   sum((dist_consensus - reference)^2) -->
+<!-- } -->
 
-# Visualiser les résultats
-library(ggplot2)
-ggplot(as.data.frame(sensitivity_results), aes(x = w1, y = w2, z = metric)) +
-  geom_contour_filled() +
-  labs(title = "Analyse de sensibilité des poids",
-       x = "Poids pour Mat1", y = "Poids pour Mat2", fill = "Métrique") +
-  theme_minimal()
-```
+<!-- # Générer des combinaisons de poids -->
+<!-- grid_size <- 10   -->
+<!-- poids_grid <- expand.grid(seq(0, 1, length.out = grid_size), -->
+<!--                             seq(0, 1, length.out = grid_size)) -->
 
-Mise en place d'échantillonnage plus petit (pas bon en cours)
+<!-- # Filtrer les combinaisons où la somme des poids est proche de 1 -->
+<!-- poids_grid <- weights_grid[rowSums(poids_grid) <= 1, ] -->
+<!-- poids_grid <- cbind(poids_grid, 1 - rowSums(poids_grid)) -->
+<!-- colnames(wpoids_grid) <- paste0("w", 1:3) -->
 
-```{r} 
-filtre_col <- function(data, num_colonnes) {
-  colonnes_selectionnees <- sample(colnames(data), num_colonnes)
-  data_selectionnee <- data[, colonnes_selectionnees, drop = FALSE]
-  
-  result <- data[apply(data, 1, function(ligne) { 
-    colonnes_avec_1 <- names(ligne)[ligne == 1]
-    return(all(colonnes_avec_1 %in% colnames(data_selectionnee)))
-  }), colonnes_selectionnees, drop = FALSE]
-  
-  return(result)
-}
+<!-- # Matrice de référence (par exemple, moyenne des matrices) -->
+<!-- reference <- Reduce(`+`, matrices) / length(matrices) -->
 
-dta_small_col <- filtre_col(new_full, 100)
+<!-- # Analyse des résultats -->
+<!-- results <- apply(weights_grid, 1, function(poids) { -->
+<!--   consensus <- compute_consensus(poids, matrices) -->
+<!--   metric <- evaluate_consensus(dist_consensus, reference) -->
+<!--   metric -->
+<!-- }) -->
 
-# Traitement sur phecode
-rownames(phecode) <- phecode[[1]]
-phecode <- phecode[-1]
+<!-- # Ajouter les résultats aux poids -->
+<!-- sensitivity_results <- cbind(poids_grid, metric = results) -->
 
-filtre_ligne <- function(data_mc, data, num_lignes) {
-  lignes_selectionnees <- sample(1:nrow(data_mc), num_lignes)
-  lignes_noms <- rownames(data_mc)[lignes_selectionnees]
-  
-  colonnes_avec_1 <- colnames(data)[apply(data[lignes_noms, ], 2, function(colonne) {
-    return(any(colonne == 1))
-  })]
-  
-  result <- data[apply(data, 1, function(ligne) {
-    colonnes_avec_1_ligne <- names(ligne)[ligne == 1]
-    return(all(colonnes_avec_1_ligne %in% colonnes_avec_1))
-  }), colnames(data) %in% colonnes_avec_1, drop = FALSE]
-  
-  return(result)
-}
+<!-- # Visualiser les résultats -->
+<!-- library(ggplot2) -->
+<!-- ggplot(as.data.frame(sensitivity_results), aes(x = w1, y = w2, z = metric)) + -->
+<!--   geom_contour_filled() + -->
+<!--   labs(title = "Analyse de sensibilité des poids", -->
+<!--        x = "Poids pour Mat1", y = "Poids pour Mat2", fill = "Métrique") + -->
+<!--   theme_minimal() -->
+<!-- ``` -->
 
-dta_small_row <- filtre_ligne(phecode, new_full, 10)
+<!-- Mise en place d'échantillonnage plus petit (pas bon en cours) -->
 
-```
+<!-- ```{r}  -->
+<!-- filtre_col <- function(data, num_colonnes) { -->
+<!--   colonnes_selectionnees <- sample(colnames(data), num_colonnes) -->
+<!--   data_selectionnee <- data[, colonnes_selectionnees, drop = FALSE] -->
+
+<!--   result <- data[apply(data, 1, function(ligne) {  -->
+<!--     colonnes_avec_1 <- names(ligne)[ligne == 1] -->
+<!--     return(all(colonnes_avec_1 %in% colnames(data_selectionnee))) -->
+<!--   }), colonnes_selectionnees, drop = FALSE] -->
+
+<!--   return(result) -->
+<!-- } -->
+
+<!-- dta_small_col <- filtre_col(new_full, 100) -->
+
+<!-- # Traitement sur phecode -->
+<!-- rownames(phecode) <- phecode[[1]] -->
+<!-- phecode <- phecode[-1] -->
+
+<!-- filtre_ligne <- function(data_mc, data, num_lignes) { -->
+<!--   lignes_selectionnees <- sample(1:nrow(data_mc), num_lignes) -->
+<!--   lignes_noms <- rownames(data_mc)[lignes_selectionnees] -->
+
+<!--   colonnes_avec_1 <- colnames(data)[apply(data[lignes_noms, ], 2, function(colonne) { -->
+<!--     return(any(colonne == 1)) -->
+<!--   })] -->
+
+<!--   result <- data[apply(data, 1, function(ligne) { -->
+<!--     colonnes_avec_1_ligne <- names(ligne)[ligne == 1] -->
+<!--     return(all(colonnes_avec_1_ligne %in% colonnes_avec_1)) -->
+<!--   }), colnames(data) %in% colonnes_avec_1, drop = FALSE] -->
+
+<!--   return(result) -->
+<!-- } -->
+
+<!-- dta_small_row <- filtre_ligne(phecode, new_full, 10) -->
+
+<!-- ``` -->
 
 ## 

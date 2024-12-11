@@ -407,4 +407,26 @@ save(asso_acm_manhattan,
      file = "asso_acm_manhattan.RData")
 save(asso_acm_eucli, file = "asso_acm_eucli.RData")
 
+######################################################################################"
+# Fonction pour standardiser une matrice de distance
+standardize_robust <- function(matrix) {
+  med <- median(matrix)
+  iqr <- IQR(matrix)
+  # Éviter la division par zéro si l'IQR est nul
+  if (iqr == 0) {
+    stop("L'IQR est nul, la standardisation robuste n'est pas possible.")
+  }
+  (matrix - med) / iqr
+}
 
+# Standardisation robuste pour chaque matrice
+dist_acm_eucli_std <- standardize_robust(dist_acm_eucli_mx)
+dist_acm_manhattan_std <- standardize_robust(dist_acm_manhattan_mx)
+dist_or_ochiai_std <- standardize_robust(dist_or_ochiai_mx)
+dist_or_sorensen_std <- standardize_robust(dist_or_sorensen_mx)
+
+# Vérifier les statistiques après transformation
+summary(as.vector(dist_acm_eucli_std))
+summary(as.vector(dist_acm_manhattan_std))
+summary(as.vector(dist_or_ochiai_std))
+summary(as.vector(dist_or_sorensen_std))
