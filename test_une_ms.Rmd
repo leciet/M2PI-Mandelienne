@@ -54,9 +54,14 @@ for(i in 1:10){
   print(min(distances_list[[i]]))
 }
 
-
-res <- AssignGene(dist_or_sorensen_ZSWIM7, method='seuil' , s = 0.8928571)
+# 0.8928571
+res <- AssignGene(dist_or_sorensen_ZSWIM7, method='seuil' , s = )
 tu <- as.data.frame(res[[1]])
+```
+
+```{r}
+as.data.frame(trans) %>% 
+  filter(`ZSWIM7 (OMIM:619834)`<=0.3)
 ```
 
 ## Including Plots
