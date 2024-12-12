@@ -9,6 +9,7 @@ sorensen_distance <- function(x, y) {
 
 
 load(file = 'Data/data_clean0.RData')
+load(file = 'Data/distance_origin_sorensen.RData')
 n_perm <- 100
 row <- or_df0[6127,]
 permutation_list <- vector("list", n_perm)
@@ -106,16 +107,27 @@ for(i in 1:n_perm) {
   # dans une liste de distances
 }
 
-plot(density(as.matrix(dist_or_sorensen_mx[2,])),col='red',main = 'Congenital anomaly of fingers/toes 330 phenotypes')
+
+plot(density(as.matrix(dist_or_sorensen_mx[c("Congenital anomaly of fingers/toes"),])),col='red',main = 'Congenital anomaly of fingers/toes 330 phenotypes')
+pmin <- c()
 for(i in 1:10){
+  pmin <- append(pmin,min(distances_list[[i]]))
   lines(density(t(as.matrix(distances_list[[i]]))))
 }
+
+seuil <- min(pmin)
+
+abd <- as.data.frame(dist_or_sorensen_mx[c("Congenital anomaly of fingers/toes"),])
+# Sélectionner toutes les distances inférieures au seuil
+selected_distances <- abd %>% 
+  filter(`dist_or_sorensen_mx[c("Congenital anomaly of fingers/toes"), ]`<=seuil)
+# on a 153 gènes sélectionné
 
 
 # [2] "Other specified congenital anomalies of nervous system" 108 -----------------------------------
 
 
-n_perm <- 10
+n_perm <- 100
 row <- or_df0[c("Other specified congenital anomalies of nervous system"),]
 permutation_list <- vector("list", n_perm)
 distances_list <- vector("list", n_perm)
@@ -136,10 +148,20 @@ for(i in 1:n_perm) {
   # dans une liste de distances
 }
 
-plot(density(as.matrix(dist_or_sorensen_mx[2,])),col='red',main = 'Other specified congenital anomalies of nervous system 108 phenotypes')
+plot(density(as.matrix(dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"),])),col='red',main = 'Other specified congenital anomalies of nervous system 108 phenotypes')
+pmin <- c()
 for(i in 1:10){
+  pmin <- append(pmin,min(distances_list[[i]]))
   lines(density(t(as.matrix(distances_list[[i]]))))
 }
+
+seuil <- min(pmin)
+
+abd <- as.data.frame(dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"),])
+# Sélectionner toutes les distances inférieures au seuil
+selected_distances <- abd %>% 
+  filter(`dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"), ]`<=seuil)
+# on a 1041 gènes sélectionné
 
 
 
@@ -167,11 +189,21 @@ for(i in 1:n_perm) {
   # dans une liste de distances
 }
 
-plot(density(as.matrix(dist_or_sorensen_mx[2,])),col='red',main = 'Congenital osteodystrophies 67 phenotypes')
+plot(density(as.matrix(dist_or_sorensen_mx[c('Congenital osteodystrophies'),])),col='red',main = 'Congenital osteodystrophies 67 phenotypes')
+pmin <- c()
 for(i in 1:10){
+  pmin <- append(pmin,min(distances_list[[i]]))
   lines(density(t(as.matrix(distances_list[[i]]))))
 }
     
+seuil <- min(pmin)
+
+abd <- as.data.frame(dist_or_sorensen_mx[c('Congenital osteodystrophies'),])
+# Sélectionner toutes les distances inférieures au seuil
+selected_distances <- abd %>% 
+  filter(`dist_or_sorensen_mx[c("Congenital osteodystrophies"), ]`<=seuil)
+# on a 530 gènes sélectionné
+
 
 # [4] "Abdominal pain"  7 -----------------------------------
 
@@ -197,8 +229,17 @@ for(i in 1:n_perm) {
   # dans une liste de distances
 }
 
-plot(density(as.matrix(dist_or_sorensen_mx[2,])),col='red',main = 'Abdominal pain 7 phenotypes')
+plot(density(as.matrix(dist_or_sorensen_mx[c("Abdominal pain"),])),col='red',main = 'Abdominal pain 7 phenotypes')
+pmin <- c()
 for(i in 1:10){
+  pmin <- append(pmin,min(distances_list[[i]]))
   lines(density(t(as.matrix(distances_list[[i]]))))
 }
 
+seuil <- min(pmin)
+
+abd <- as.data.frame(dist_or_sorensen_mx[c("Abdominal pain"),])
+# Sélectionner toutes les distances inférieures au seuil
+selected_distances <- abd %>% 
+  filter(`dist_or_sorensen_mx[c("Abdominal pain"), ]`<=seuil)
+# on a 4 gènes sélectionné
