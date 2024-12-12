@@ -130,8 +130,7 @@ str(dist_consensus)
 
 ```
 
-\
-Etape 2 bis : Comparaison des matrices entre elle
+Etape 2 bis : Comparaison des matrices entre elles
 
 ```{r}
 #Code Nemo 
@@ -231,7 +230,7 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
       stop("Le seuil doit être compris entre 0 et 1")
     }
     flong_filtre <- flong %>% 
-      filter(distance>=s) %>% 
+      filter(distance<=s) %>% 
       group_by(mc) %>% 
       summarise( mc = mc, ms=ms, distance=distance, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
   } else if(method=='quantile'){
@@ -239,7 +238,7 @@ AssignGene <- function(dist, method='seuil' , s = 0.5 , q = 0.25 , graph = TRUE)
       stop("Le quantile doit être compris entre 0 et 1")
     }
     flong_filtre <- flong %>% 
-      filter(distance>=quantile(distance,q))%>% 
+      filter(distance<=quantile(distance,q))%>% 
       group_by(mc) %>% 
       summarise( mc = mc, ms=ms, distance=distance, liste_genes = paste(ms,collapse = " ; "),.groups = 'drop')
   } else{

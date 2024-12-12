@@ -1,0 +1,70 @@
+---
+title: "Test - une maladie simple"
+author: "Sara Larcher"
+date: "2024-12-12"
+output: html_document
+---
+On test ici si en prenant une maladie simple à la place de notre maladie 
+complexe elle se relit à elle même en priorité.
+On utilise la maladie simple ZSWIM7 (OMIM:619834)
+
+```{r setup, include=FALSE}
+
+#On recupere la distance sorensen avec la ligne ZSWIM7 (OMIM:619834) en plus 
+
+dist_or_sorensen <- dist.binary(or_filter_df0 ,method = 5) #Long 
+dist_or_sorensen <- as.data.frame(as.matrix(dist_or_sorensen))
+dist_or_sorensen <- dist_or_sorensen[6125:7089,1:6125]
+dist_or_sorensen_ZSWIM7 <- as.matrix(dist_or_sorensen)
+#save(dist_or_sorensen_ZSWIM7, file = "distance_MS_test.RData" )
+#On peut load direct le test 
+
+or_filter_df0 <- or_df0 %>% 
+  filter(rowSums(or_df0)!=0)
+```
+
+```{r}
+sorensen_distance <- function(x, y) {
+  1 - (2 * sum(x & y)) / (sum(x) + sum(y))
+}
+
+n_perm <- 10
+row <- or_df0[c("ZSWIM7 (OMIM:619834)"),]
+permutation_list <- vector("list", n_perm)
+distances_list <- vector("list", n_perm)
+original_rowname <- rownames(row)
+original_colnames <- colnames(or_df0)
+
+for(i in 1:n_perm) {
+  permuted_row <- sample(row, length(row), replace = FALSE)
+  new_df <- permuted_row # créé matrice 1 seule ligne avec ligne permutée 
+  colnames(new_df) <- original_colnames
+  rownames(new_df) <- original_rowname
+  permutation_list[[i]] <- new_df   # ajoute ma ligne permutée en dernier indice de ma liste de permutation
+  temp_df <- rbind(or_df0[1:6125,], new_df) # créé temporairement une matrice les 6125 maladies 
+  # simples et une maladie complexe 
+  distances <- apply(temp_df[1:6125,], 1, function(row) sorensen_distance(as.numeric(row), as.numeric(new_df)))
+  distances_list[[i]] <- distances # je stocke la matrice de distances à 1 ligne pour ma maladie simple
+  # dans une liste de distances
+}
+
+plot(density(as.matrix(dist_or_sorensen_ZSWIM7[c("ZSWIM7 (OMIM:619834)"),])),col='red',main = 'ZSWIM7 (OMIM:619834)')
+for(i in 1:10){
+  lines(density(t(as.matrix(distances_list[[i]]))))
+  print(min(distances_list[[i]]))
+}
+
+
+res <- AssignGene(dist_or_sorensen_ZSWIM7, method='seuil' , s = 0.8928571)
+tu <- as.data.frame(res[[1]])
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
