@@ -1,37 +1,23 @@
-library(ade4)
+rm(list = ls())
 
-generate_permutations_and_distances <- function(row, or_df0, n_perm = 200) {
-  permutation_list <- vector("list", n_perm)
-  distances_list <- vector("list", n_perm)
-  original_rowname <- rownames(row)
-  original_colnames <- colnames(or_df0)
-  
-  for(i in 1:n_perm) {
-    permuted_row <- sample(row, length(row), replace = FALSE)
-    new_df <- data.frame(matrix(permuted_row, nrow=1)) # créé matrice 1 seule ligne avec ligne permutée 
-    colnames(new_df) <- original_colnames
-    rownames(new_df) <- original_rowname
-    permutation_list[[i]] <- new_df   # ajoute ma ligne permutée en dernier indice de ma liste de permutation
-    temp_df <- rbind(or_df0[1:6125,], permutation_list[[i]]) # créé temporairement une matrice les 6125 maladies 
-    # simples et une maladie complexe 
-    distances_sorensen <- as.matrix(dist.binary(temp_df,method = 5))[6126,1:6125]  # créé une matrice distance 
-    distances_list[[i]] <- distances_sorensen # je stocke la matrice de distances à 1 ligne pour ma maladie simple
-    # dans une liste de distances
-  }
-  return(list(
-    permutations = permutation_list,
-    distances = distances_list
-  ))
+
+# Calcul de la distance de Sørensen
+# Fonction de distance personnalisée
+sorensen_distance <- function(x, y) {
+  1 - (2 * sum(x & y)) / (sum(x) + sum(y))
 }
 
-test <- generate_permutations_and_distances(or_df0[6127,], or_df0,n_perm = 1)
 
-n_perm <- 10
+load(file = 'Data/data_clean0.RData')
+load(file = 'Data/distance_origin_sorensen.RData')
+n_perm <- 100
 row <- or_df0[6127,]
 permutation_list <- vector("list", n_perm)
 distances_list <- vector("list", n_perm)
 original_rowname <- rownames(row)
 original_colnames <- colnames(or_df0)
+
+
 for(i in 1:n_perm) {
   permuted_row <- sample(row, length(row), replace = FALSE)
   new_df <- permuted_row # créé matrice 1 seule ligne avec ligne permutée 
@@ -40,39 +26,220 @@ for(i in 1:n_perm) {
   permutation_list[[i]] <- new_df   # ajoute ma ligne permutée en dernier indice de ma liste de permutation
   temp_df <- rbind(or_df0[1:6125,], new_df) # créé temporairement une matrice les 6125 maladies 
   # simples et une maladie complexe 
-  distances <- c()
-  for (j in 1:6125) {
-    dist <- as.matrix(dist.binary(temp_df[c(j,6126),],method = 5))[2,1]
-    distances <- append(distances,dist)
-  }
+  distances <- apply(temp_df[1:6125,], 1, function(row) sorensen_distance(as.numeric(row), as.numeric(new_df)))
   distances_list[[i]] <- distances # je stocke la matrice de distances à 1 ligne pour ma maladie simple
   # dans une liste de distances
 }
 
 
-test <- as.data.frame(distances_list[[1]])
-distances_sorensen <- t(as.data.frame(distances_sorensen))
+
+test <- t(as.matrix(distances_list[[1]]))
 
 
-
-
-permuted_row <- sample(row, length(row), replace = FALSE)
-new_df <- permuted_row # créé matrice 1 seule ligne avec ligne permutée 
-colnames(new_df) <- original_colnames
-rownames(new_df) <- original_rowname
-permutation_list[[2]] <- new_df   # ajoute ma ligne permutée en dernier indice de ma liste de permutation
-temp_df <- rbind(or_df0[1:6125,], new_df) # créé temporairement une matrice les 6125 maladies 
-# simples et une maladie complexe 
-distances <- as.matrix(dist.binary(temp_df[1:2,],method = 5))
-
-
-distances <- c()
-for (i in 1:6125) {
-  dist <- as.matrix(dist.binary(temp_df[c(i,6126),],method = 5))[2,1]
-  distances <- append(distances,dist)
+plot(density(as.matrix(dist_or_sorensen_mx[2,])),col='red')
+for(i in 1:10){
+  lines(density(t(as.matrix(distances_list[[i]]))))
 }
 
 
-distances <- as.data.frame(distances)
-plot(density(as.matrix(o_sorensen[2,])))
-lines(density(as.matrix(distances)),col='red')
+
+# Distribution des mc selon leur nombre de phénotypes associés
+
+somPh <- as.matrix(apply(or_df0[6126:7091,],1,sum))
+
+library(tidyverse)
+
+as.data.frame(somPh) %>% 
+  ggplot()+
+  aes(x=V1)+
+  geom_density(stat = 'density',linewidth = 1)+
+  geom_vline(xintercept=330,col='blue')+
+  geom_vline(xintercept=108,col='blue')+
+  geom_vline(xintercept=67,col='blue')+
+  geom_vline(xintercept=7,col='blue')+
+  labs(title ='Nombre de phénotypes associés aux maladies complexes' )+
+  xlab('Nombre de phénotypes')+
+  ylab('Densité')+
+  theme_classic()
+
+
+
+# Définir les sommes cibles
+target_sums <- c(330, 108, 67, 7)
+
+# Initialiser un vecteur pour stocker les noms correspondants
+matching_rows <- c()
+
+# Parcourir chaque somme cible
+for (target in target_sums) {
+  # Trouver la première ligne correspondant à la somme cible
+  matching_row <- rownames(or_df0[6126:7091, ])[which(apply(or_df0[6126:7091, ], 1, sum) == target)[1]]
+  # Ajouter le nom trouvé au vecteur
+  matching_rows <- c(matching_rows, matching_row)
+}
+
+# Afficher les noms de lignes correspondant aux sommes cibles
+matching_rows
+
+
+# test sur ces 4 maladies
+# [1] "Congenital anomaly of fingers/toes"  330 -----------------------------------
+
+
+n_perm <- 10
+row <- or_df0[c("Congenital anomaly of fingers/toes"),]
+permutation_list <- vector("list", n_perm)
+distances_list <- vector("list", n_perm)
+original_rowname <- rownames(row)
+original_colnames <- colnames(or_df0)
+
+
+for(i in 1:n_perm) {
+  permuted_row <- sample(row, length(row), replace = FALSE)
+  new_df <- permuted_row # créé matrice 1 seule ligne avec ligne permutée 
+  colnames(new_df) <- original_colnames
+  rownames(new_df) <- original_rowname
+  permutation_list[[i]] <- new_df   # ajoute ma ligne permutée en dernier indice de ma liste de permutation
+  temp_df <- rbind(or_df0[1:6125,], new_df) # créé temporairement une matrice les 6125 maladies 
+  # simples et une maladie complexe 
+  distances <- apply(temp_df[1:6125,], 1, function(row) sorensen_distance(as.numeric(row), as.numeric(new_df)))
+  distances_list[[i]] <- distances # je stocke la matrice de distances à 1 ligne pour ma maladie simple
+  # dans une liste de distances
+}
+
+
+plot(density(as.matrix(dist_or_sorensen_mx[c("Congenital anomaly of fingers/toes"),])),col='red',main = 'Congenital anomaly of fingers/toes 330 phenotypes')
+pmin <- c()
+for(i in 1:10){
+  pmin <- append(pmin,min(distances_list[[i]]))
+  lines(density(t(as.matrix(distances_list[[i]]))))
+}
+
+seuil <- min(pmin)
+
+abd <- as.data.frame(dist_or_sorensen_mx[c("Congenital anomaly of fingers/toes"),])
+# Sélectionner toutes les distances inférieures au seuil
+selected_distances <- abd %>% 
+  filter(`dist_or_sorensen_mx[c("Congenital anomaly of fingers/toes"), ]`<=seuil)
+# on a 153 gènes sélectionné
+
+
+# [2] "Other specified congenital anomalies of nervous system" 108 -----------------------------------
+
+
+n_perm <- 100
+row <- or_df0[c("Other specified congenital anomalies of nervous system"),]
+permutation_list <- vector("list", n_perm)
+distances_list <- vector("list", n_perm)
+original_rowname <- rownames(row)
+original_colnames <- colnames(or_df0)
+
+
+for(i in 1:n_perm) {
+  permuted_row <- sample(row, length(row), replace = FALSE)
+  new_df <- permuted_row # créé matrice 1 seule ligne avec ligne permutée 
+  colnames(new_df) <- original_colnames
+  rownames(new_df) <- original_rowname
+  permutation_list[[i]] <- new_df   # ajoute ma ligne permutée en dernier indice de ma liste de permutation
+  temp_df <- rbind(or_df0[1:6125,], new_df) # créé temporairement une matrice les 6125 maladies 
+  # simples et une maladie complexe 
+  distances <- apply(temp_df[1:6125,], 1, function(row) sorensen_distance(as.numeric(row), as.numeric(new_df)))
+  distances_list[[i]] <- distances # je stocke la matrice de distances à 1 ligne pour ma maladie simple
+  # dans une liste de distances
+}
+
+plot(density(as.matrix(dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"),])),col='red',main = 'Other specified congenital anomalies of nervous system 108 phenotypes')
+pmin <- c()
+for(i in 1:10){
+  pmin <- append(pmin,min(distances_list[[i]]))
+  lines(density(t(as.matrix(distances_list[[i]]))))
+}
+
+seuil <- min(pmin)
+
+abd <- as.data.frame(dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"),])
+# Sélectionner toutes les distances inférieures au seuil
+selected_distances <- abd %>% 
+  filter(`dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"), ]`<=seuil)
+# on a 1041 gènes sélectionné
+
+
+
+# [3] "Congenital osteodystrophies" 67 -----------------------------------
+
+
+n_perm <- 10
+row <- or_df0[c("Congenital osteodystrophies"),]
+permutation_list <- vector("list", n_perm)
+distances_list <- vector("list", n_perm)
+original_rowname <- rownames(row)
+original_colnames <- colnames(or_df0)
+
+
+for(i in 1:n_perm) {
+  permuted_row <- sample(row, length(row), replace = FALSE)
+  new_df <- permuted_row # créé matrice 1 seule ligne avec ligne permutée 
+  colnames(new_df) <- original_colnames
+  rownames(new_df) <- original_rowname
+  permutation_list[[i]] <- new_df   # ajoute ma ligne permutée en dernier indice de ma liste de permutation
+  temp_df <- rbind(or_df0[1:6125,], new_df) # créé temporairement une matrice les 6125 maladies 
+  # simples et une maladie complexe 
+  distances <- apply(temp_df[1:6125,], 1, function(row) sorensen_distance(as.numeric(row), as.numeric(new_df)))
+  distances_list[[i]] <- distances # je stocke la matrice de distances à 1 ligne pour ma maladie simple
+  # dans une liste de distances
+}
+
+plot(density(as.matrix(dist_or_sorensen_mx[c('Congenital osteodystrophies'),])),col='red',main = 'Congenital osteodystrophies 67 phenotypes')
+pmin <- c()
+for(i in 1:10){
+  pmin <- append(pmin,min(distances_list[[i]]))
+  lines(density(t(as.matrix(distances_list[[i]]))))
+}
+    
+seuil <- min(pmin)
+
+abd <- as.data.frame(dist_or_sorensen_mx[c('Congenital osteodystrophies'),])
+# Sélectionner toutes les distances inférieures au seuil
+selected_distances <- abd %>% 
+  filter(`dist_or_sorensen_mx[c("Congenital osteodystrophies"), ]`<=seuil)
+# on a 530 gènes sélectionné
+
+
+# [4] "Abdominal pain"  7 -----------------------------------
+
+
+n_perm <- 10
+row <- or_df0[c("Abdominal pain"),]
+permutation_list <- vector("list", n_perm)
+distances_list <- vector("list", n_perm)
+original_rowname <- rownames(row)
+original_colnames <- colnames(or_df0)
+
+
+for(i in 1:n_perm) {
+  permuted_row <- sample(row, length(row), replace = FALSE)
+  new_df <- permuted_row # créé matrice 1 seule ligne avec ligne permutée 
+  colnames(new_df) <- original_colnames
+  rownames(new_df) <- original_rowname
+  permutation_list[[i]] <- new_df   # ajoute ma ligne permutée en dernier indice de ma liste de permutation
+  temp_df <- rbind(or_df0[1:6125,], new_df) # créé temporairement une matrice les 6125 maladies 
+  # simples et une maladie complexe 
+  distances <- apply(temp_df[1:6125,], 1, function(row) sorensen_distance(as.numeric(row), as.numeric(new_df)))
+  distances_list[[i]] <- distances # je stocke la matrice de distances à 1 ligne pour ma maladie simple
+  # dans une liste de distances
+}
+
+plot(density(as.matrix(dist_or_sorensen_mx[c("Abdominal pain"),])),col='red',main = 'Abdominal pain 7 phenotypes')
+pmin <- c()
+for(i in 1:10){
+  pmin <- append(pmin,min(distances_list[[i]]))
+  lines(density(t(as.matrix(distances_list[[i]]))))
+}
+
+seuil <- min(pmin)
+
+abd <- as.data.frame(dist_or_sorensen_mx[c("Abdominal pain"),])
+# Sélectionner toutes les distances inférieures au seuil
+selected_distances <- abd %>% 
+  filter(`dist_or_sorensen_mx[c("Abdominal pain"), ]`<=seuil)
+# on a 4 gènes sélectionné
