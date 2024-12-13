@@ -1,22 +1,3 @@
-# generate_permutations <- function(row, n_perm = 200) {
-#   permutation_list <- vector("list", n_perm)
-#   # Récupérer le rowname de la ligne d'entrée
-#   original_rowname <- rownames(row)
-#   for(i in 1:n_perm) {
-#     # Permuter la ligne
-#     permuted_row <- sample(row, length(row), replace = FALSE)
-#     # Créer un nouveau dataframe avec la ligne permutée
-#     new_df <- data.frame(matrix(permuted_row, nrow=1))
-#     # Assigner le rowname original
-#     rownames(new_df) <- original_rowname
-#     # Stocker dans la liste
-#     permutation_list[[i]] <- new_df
-#   }
-#   return(permutation_list)
-# }
-# permutations <- generate_permutations(or_df0[6127,])
-# View(permutations[[2]])
-
 rm(omim)
 rm(phecode)
 
@@ -38,7 +19,7 @@ generate_permutations <- function(row, n_perm = 200) {
 }
 
 debut <- proc.time()
-permutations <- generate_permutations(or_df0[6127,])
+permutations <- generate_permutations(or_df0[6129,])
 fin <- proc.time()
 temps_execution <- fin - debut
 print(temps_execution)  # 341 secondes soit environ 5,6 minutes
@@ -48,6 +29,12 @@ dataframe <- as.data.frame(permutations[[5]])
 View(dataframe)
 colonnes_indices <- which(dataframe[1, ] == 1)
 colonnes_noms <- names(dataframe)[which(dataframe[1, ] == 1)]
+
+dataframe_global <- do.call(rbind, permutations)
+View(dataframe_global)
+# Compare toutes les lignes avec la première
+all(sapply(2:nrow(dataframe_global), function(i) 
+  isTRUE(all.equal(dataframe_global[1,], dataframe_global[i,]))))
 
 ############################################# validé jusque là
 
@@ -114,6 +101,7 @@ print(temps2)
 
 # c'est validé
 
+
 ##########################################################
 compute_all_distances_v2 <- function(permutation_list, or_df0) {
   lapply(permutation_list, function(perm) compute_euclidean_distances_v2(perm, or_df0))
@@ -128,7 +116,7 @@ print(temps_total)   # 339,42 secondes soit 6 minutes environ
 View(resultats)
 
 str(resultats)
-resultats$
+resultats
 
 resultats2 <- unlist(resultats)
 View(resultats2)
@@ -138,13 +126,9 @@ dataframe_final <- matrix(0, nrow = 200, ncol = 6125)
 dataframe_final <- as.data.frame(dataframe_final)
 View(dataframe_final)
 
-for (j in 1:200) {
-  for (i in 1:6125){
-  l=1
-  dataframe_final[j, i] <- resultats2[l, 1]
-  l=l+1
-  }
-}
+# Convertir la liste de résultats en matrice directement
+dataframe_final <- matrix(unlist(resultats), nrow = 200, byrow = TRUE)
+dataframe_final <- as.data.frame(dataframe_final)
 View(dataframe_final)
 
 min_distances <- apply(dataframe_final, 1, min)
@@ -180,47 +164,106 @@ str(dataframe_graphique)
 summary(dataframe_graphique)
 dim(dataframe_graphique)
 
-dataframe_graphique2 <- as.matrix(dataframe_graphique)
-transposee_dataframe_graphique <- t(dataframe_graphique2)
-plot(dataframe_graphique)
-
 library(DataExplorer)
 plot_histogram(dataframe_graphique)
 library(ggmcmc)
 ggs_histogram(dataframe_graphique, family = "V", bins = 30, greek = FALSE)
 
 
+##########################################################  Sorensen
 
-# generate_permutations_and_distances(or_df0[6127,], or_df0)
-# 
-# # 1. Récupération des distances minimales
-# min_distances <- sapply(resultats$distances, min)
-# # 2. Préparation des données pour ggplot
-# df_distances <- data.frame(
-#   min_distance = min_distances,
-#   permutation = 1:length(min_distances)
-# )
-# # 3. Calcul des valeurs pour les lignes verticales
-# min_of_mins <- min(min_distances)
-# max_of_mins <- max(min_distances)
-# 
-# # 4. Création du graphique
-# library(ggplot2)
-# ggplot(df_distances, aes(x = min_distance)) +
-#   geom_histogram(binwidth = (max(min_distances) - min(min_distances))/30, 
-#                  fill = "skyblue", color = "black", alpha = 0.7) +
-#   geom_vline(xintercept = min_of_mins, color = "red", linetype = "dashed", size = 1) +
-#   geom_vline(xintercept = max_of_mins, color = "blue", linetype = "dashed", size = 1) +
-#   annotate("text", x = min_of_mins, y = Inf, label = sprintf("Min: %.3f", min_of_mins),
-#            vjust = 2, hjust = -0.1, color = "red") +
-#   annotate("text", x = max_of_mins, y = Inf, label = sprintf("Max: %.3f", max_of_mins),
-#            vjust = 2, hjust = 1.1, color = "blue") +
-#   labs(title = "Distribution des distances minimales pour les 200 permutations",
-#        x = "Distance minimale",
-#        y = "Fréquence") +
-#   theme_minimal() +
-#   theme(
-#     plot.title = element_text(hjust = 0.5),
-#     axis.text = element_text(size = 10),
-#     axis.title = element_text(size = 12)
-#   )
+compute_sorensen_distances_v2 <- function(permuted_df, or_df0) {
+  # Convertir la ligne permutée une seule fois
+  v2 <- unlist(permuted_df[1,])
+  
+  # Convertir toutes les maladies simples en une seule matrice
+  mat_maladies <- as.matrix(or_df0[1:6125,])
+  
+  # Calcul vectorisé des distances de Sorensen
+  # Pour chaque ligne, calculer :
+  # 1 - (2 * nombre d'éléments communs) / (somme des éléments dans chaque vecteur)
+  common <- rowSums(mat_maladies & v2)  # éléments communs (1 et 1)
+  total <- rowSums(mat_maladies) + sum(v2)  # somme des éléments dans chaque vecteur
+  
+  distances <- 1 - (2 * common / total)
+  
+  cat("Calcul vectorisé terminé - 6125 distances de Sorensen calculées\n")
+  return(distances)
+}
+
+# Test
+debut <- proc.time()
+dist_sorensen <- compute_sorensen_distances_v2(permutations[[1]], or_df0)
+fin <- proc.time()   #11 seconde c'est sympa aussi
+temps <- fin - debut
+print(temps)
+
+compute_all_distances_sorensen <- function(permutation_list, or_df0) {
+  lapply(permutation_list, function(perm) compute_sorensen_distances_v2(perm, or_df0))
+}
+
+# Exécution avec mesure du temps
+debut <- proc.time()
+resultats_sorensen <- compute_all_distances_sorensen(permutations, or_df0)
+fin <- proc.time()  #316 secondes
+temps_total <- fin - debut
+print(temps_total)
+
+# Manipulation des résultats
+resultats2_sorensen <- unlist(resultats_sorensen)
+resultats2_sorensen <- as.data.frame(resultats2_sorensen)
+
+# Convertir la liste de résultats en matrice directement
+dataframe_final_sorensen <- matrix(unlist(resultats_sorensen), nrow = 200, byrow = TRUE)
+dataframe_final_sorensen <- as.data.frame(dataframe_final_sorensen)
+
+# Calculer les minimums
+min_distances_sorensen <- apply(dataframe_final_sorensen, 1, min)
+min_distances_sorensen <- as.data.frame(min_distances_sorensen)
+min_of_mins_sorensen <- min(min_distances_sorensen)
+max_of_mins_sorensen <- max(min_distances_sorensen)
+
+# Récupérer la maladie complexe originale
+nom_mc <- rownames(permutations[[1]])
+nom_mc
+mc_originale <- or_df0[which(rownames(or_df0)==nom_mc),]
+mat2_maladies <- as.matrix(or_df0[1:6125,])
+mc_originale <- as.integer(mc_originale)
+
+# Calculer les distances de Sorensen pour la maladie complexe originale
+common_original <- rowSums(mat2_maladies & mc_originale)
+total_original <- rowSums(mat2_maladies) + sum(mc_originale)
+distances_mc_originale_sorensen <- 1 - (2 * common_original / total_original)
+
+# Créer le dataframe final pour le graphique
+dataframe_graphique_sorensen <- rbind(dataframe_final_sorensen, distances_mc_originale_sorensen)
+View(dataframe_graphique_sorensen)
+
+# Préparation des données pour les courbes
+df_long <- as.data.frame(dataframe_graphique_sorensen) %>%
+  mutate(row_id = row_number()) %>%
+  gather(key = "column", value = "value", -row_id)
+
+# 2. Plot des densités
+p2 <- ggplot(df_long, aes(x = value, group = row_id)) +
+  geom_density(aes(color = row_id == 201), alpha = 0.1) +
+  scale_color_manual(values = c("black", "red")) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(title = "Densités des distances pour chaque permutation",
+       x = "Distance",
+       y = "Densité")
+p2
+
+p2 <- ggplot(df_long, aes(x = value, group = row_id)) +
+  geom_density(aes(color = row_id == 201), alpha = 0.1) +
+  scale_color_manual(values = c("black", "red")) +
+  # Limiter les axes x et y
+  coord_cartesian(xlim = c(0.85, 1), ylim = c(0, 50)) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(title = "Densités des distances pour chaque permutation",
+       x = "Distance",
+       y = "Densité")
+p2
+
