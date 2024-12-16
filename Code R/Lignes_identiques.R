@@ -29,7 +29,6 @@ analyser_patterns_maladies <- function(data) {
     positions_1 <- paste(which(data[maladies_concernees[1],] == 1), collapse = ", ")
     
     resultats <- rbind(resultats, data.frame(
-      Pattern_ID = i,
       Maladies = paste(maladies_concernees, collapse = ", "),
       Nombre_1 = nombre_1,
       Positions_1 = positions_1,
