@@ -39,3 +39,4 @@ analyser_patterns_maladies <- function(data) {
   
   return(resultats)
 }
+
