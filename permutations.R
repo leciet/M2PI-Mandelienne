@@ -280,8 +280,22 @@ selected_distances <- abd %>%
 
 
 
+library(tidyverse)
 
 
+sorensen <- as.data.frame(dist_or_sorensen_mx)
+sorensen$rowname <- rownames(sorensen)
+rownames(results) <- results[,1]
+sorensen <- inner_join(sorensen,results,by='rowname')
+sorensen$threshold <- as.numeric(sorensen$threshold)
+# Calculer le nombre de distances inférieures au seuil pour chaque ligne
+result <- sorensen %>%
+  rowwise() %>%                             # Traiter chaque ligne individuellement
+  mutate(
+    Nb_Distances_Sous_Seuil = sum(c_across(1:6125) <= threshold) ) %>%# Calculer les colonnes sous le seuil
+  ungroup() %>%
+  select(rowname,Nb_Distances_Sous_Seuil) # Garder uniquement les colonnes nécessaires
 
+  
 
 
