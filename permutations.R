@@ -127,7 +127,7 @@ selected_distances <- abd %>%
 # [2] "Other specified congenital anomalies of nervous system" 108 -----------------------------------
 
 
-n_perm <- 100
+n_perm <- 10
 row <- or_df0[c("Other specified congenital anomalies of nervous system"),]
 permutation_list <- vector("list", n_perm)
 distances_list <- vector("list", n_perm)
@@ -148,7 +148,7 @@ for(i in 1:n_perm) {
   # dans une liste de distances
 }
 
-plot(density(as.matrix(dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"),])),col='red',main = 'Other specified congenital anomalies of nervous system 108 phenotypes')
+plot(density(as.matrix(dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"),])),col='red',main = 'Other specified congenital anomalies of nervous system : 108 phenotypes', sub = '1083 simple diseases kept')
 pmin <- c()
 for(i in 1:10){
   pmin <- append(pmin,min(distances_list[[i]]))
@@ -157,12 +157,46 @@ for(i in 1:10){
 
 seuil <- min(pmin)
 
+library(tidyverse)
+
 abd <- as.data.frame(dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"),])
 # Sélectionner toutes les distances inférieures au seuil
 selected_distances <- abd %>% 
   filter(`dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"), ]`<=seuil)
 # on a 1041 gènes sélectionné
 
+
+
+# regarder les phénotypes
+library(reshape)
+
+liste_assign <- c(rownames(selected_distances))
+
+phenotype <- or_df0[liste_assign,]
+
+# Combiner les deux dataframes pour comparaison
+comparison <- phenotype %>%
+  mutate(across(everything(), ~ ifelse(. == 1 & new_df[1, cur_column()]==1, 1, 0)))  # Réattacher les noms des maladies
+
+
+nb1 <- as.data.frame(apply(comparison,1,sum))
+
+nb <- nb1 %>% filter(`apply(comparison, 1, sum)`!=0)
+# Résultat
+comparison
+
+# Comparer et compter les phénotypes
+result <- phenotype %>%
+  rowwise() %>% # Permet de traiter chaque ligne individuellement
+  mutate(
+    Commun = sum(c_across() == 1 & new_df[1, ]==1),        # Compter les phénotypes communs
+    Autre = sum(c_across() != new_df[1, ])      # Compter les phénotypes différents
+  ) %>%
+  ungroup() %>%
+  select( rownames(phenotype),Commun, Autre) # Garder uniquement les colonnes nécessaires
+
+# Afficher le résultat
+result
 
 
 # [3] "Congenital osteodystrophies" 67 -----------------------------------
@@ -229,7 +263,7 @@ for(i in 1:n_perm) {
   # dans une liste de distances
 }
 
-plot(density(as.matrix(dist_or_sorensen_mx[c("Abdominal pain"),])),col='red',main = 'Abdominal pain 7 phenotypes')
+plot(density(as.matrix(dist_or_sorensen_mx[c("Abdominal pain"),])),col='red',main = 'Abdominal pain : 7 phenotypes', sub = '10 simple diseases kept')
 pmin <- c()
 for(i in 1:10){
   pmin <- append(pmin,min(distances_list[[i]]))
@@ -243,3 +277,11 @@ abd <- as.data.frame(dist_or_sorensen_mx[c("Abdominal pain"),])
 selected_distances <- abd %>% 
   filter(`dist_or_sorensen_mx[c("Abdominal pain"), ]`<=seuil)
 # on a 4 gènes sélectionné
+
+
+
+
+
+
+
+
