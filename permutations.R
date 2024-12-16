@@ -108,7 +108,7 @@ for(i in 1:n_perm) {
 }
 
 
-plot(density(as.matrix(dist_or_sorensen_mx[c("Congenital anomaly of fingers/toes"),])),col='red',main = 'Congenital anomaly of fingers/toes 330 phenotypes')
+plot(density(as.matrix(dist_or_sorensen_mx[c("Congenital anomaly of fingers/toes"),])),col='red',main = 'Congenital anomaly of fingers/toes : 330 phenotypes', sub = '148 simple diseases kept')
 pmin <- c()
 for(i in 1:10){
   pmin <- append(pmin,min(distances_list[[i]]))
