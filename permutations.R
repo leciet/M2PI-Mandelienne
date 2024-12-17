@@ -1,12 +1,10 @@
 rm(list = ls())
 
-
 # Calcul de la distance de Sørensen
 # Fonction de distance personnalisée
 sorensen_distance <- function(x, y) {
   1 - (2 * sum(x & y)) / (sum(x) + sum(y))
 }
-
 
 load(file = 'Data/data_clean0.RData')
 load(file = 'Data/distance_origin_sorensen.RData')
@@ -16,7 +14,6 @@ permutation_list <- vector("list", n_perm)
 distances_list <- vector("list", n_perm)
 original_rowname <- rownames(row)
 original_colnames <- colnames(or_df0)
-
 
 for(i in 1:n_perm) {
   permuted_row <- sample(row, length(row), replace = FALSE)
@@ -31,17 +28,12 @@ for(i in 1:n_perm) {
   # dans une liste de distances
 }
 
-
-
 test <- t(as.matrix(distances_list[[1]]))
-
 
 plot(density(as.matrix(dist_or_sorensen_mx[2,])),col='red')
 for(i in 1:10){
   lines(density(t(as.matrix(distances_list[[i]]))))
 }
-
-
 
 # Distribution des mc selon leur nombre de phénotypes associés
 
@@ -62,8 +54,6 @@ as.data.frame(somPh) %>%
   ylab('Densité')+
   theme_classic()
 
-
-
 # Définir les sommes cibles
 target_sums <- c(330, 108, 67, 7)
 
@@ -81,10 +71,8 @@ for (target in target_sums) {
 # Afficher les noms de lignes correspondant aux sommes cibles
 matching_rows
 
-
 # test sur ces 4 maladies
 # [1] "Congenital anomaly of fingers/toes"  330 -----------------------------------
-
 
 n_perm <- 10
 row <- or_df0[c("Congenital anomaly of fingers/toes"),]
@@ -92,7 +80,6 @@ permutation_list <- vector("list", n_perm)
 distances_list <- vector("list", n_perm)
 original_rowname <- rownames(row)
 original_colnames <- colnames(or_df0)
-
 
 for(i in 1:n_perm) {
   permuted_row <- sample(row, length(row), replace = FALSE)
@@ -106,7 +93,6 @@ for(i in 1:n_perm) {
   distances_list[[i]] <- distances # je stocke la matrice de distances à 1 ligne pour ma maladie simple
   # dans une liste de distances
 }
-
 
 plot(density(as.matrix(dist_or_sorensen_mx[c("Congenital anomaly of fingers/toes"),])),col='red',main = 'Congenital anomaly of fingers/toes : 330 phenotypes', sub = '148 simple diseases kept')
 pmin <- c()
@@ -123,9 +109,7 @@ selected_distances <- abd %>%
   filter(`dist_or_sorensen_mx[c("Congenital anomaly of fingers/toes"), ]`<=seuil)
 # on a 153 gènes sélectionné
 
-
 # [2] "Other specified congenital anomalies of nervous system" 108 -----------------------------------
-
 
 n_perm <- 10
 row <- or_df0[c("Other specified congenital anomalies of nervous system"),]
@@ -133,7 +117,6 @@ permutation_list <- vector("list", n_perm)
 distances_list <- vector("list", n_perm)
 original_rowname <- rownames(row)
 original_colnames <- colnames(or_df0)
-
 
 for(i in 1:n_perm) {
   permuted_row <- sample(row, length(row), replace = FALSE)
@@ -166,7 +149,6 @@ selected_distances <- abd %>%
 # on a 1041 gènes sélectionné
 
 
-
 # regarder les phénotypes
 library(reshape)
 
@@ -177,7 +159,6 @@ phenotype <- or_df0[liste_assign,]
 # Combiner les deux dataframes pour comparaison
 comparison <- phenotype %>%
   mutate(across(everything(), ~ ifelse(. == 1 & new_df[1, cur_column()]==1, 1, 0)))  # Réattacher les noms des maladies
-
 
 nb1 <- as.data.frame(apply(comparison,1,sum))
 
@@ -198,9 +179,7 @@ result <- phenotype %>%
 # Afficher le résultat
 result
 
-
 # [3] "Congenital osteodystrophies" 67 -----------------------------------
-
 
 n_perm <- 10
 row <- or_df0[c("Congenital osteodystrophies"),]
@@ -208,7 +187,6 @@ permutation_list <- vector("list", n_perm)
 distances_list <- vector("list", n_perm)
 original_rowname <- rownames(row)
 original_colnames <- colnames(or_df0)
-
 
 for(i in 1:n_perm) {
   permuted_row <- sample(row, length(row), replace = FALSE)
@@ -238,9 +216,7 @@ selected_distances <- abd %>%
   filter(`dist_or_sorensen_mx[c("Congenital osteodystrophies"), ]`<=seuil)
 # on a 530 gènes sélectionné
 
-
 # [4] "Abdominal pain"  7 -----------------------------------
-
 
 n_perm <- 10
 row <- or_df0[c("Abdominal pain"),]
@@ -278,10 +254,7 @@ selected_distances <- abd %>%
   filter(`dist_or_sorensen_mx[c("Abdominal pain"), ]`<=seuil)
 # on a 4 gènes sélectionné
 
-
-
 library(tidyverse)
-
 
 sorensen <- as.data.frame(dist_or_sorensen_mx)
 sorensen$rowname <- rownames(sorensen)
