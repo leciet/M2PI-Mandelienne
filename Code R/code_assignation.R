@@ -166,8 +166,14 @@ asso_origin_sorensen <- data.frame(ifelse(dist_or_sorensen_mx<=0.84,1,0))
 save(asso_origin_ochiai,asso_origin_sorensen,file="Matrice d'association/asso_origin.RData")
 
 
+plot(density(as.numeric(dist_or_sorensen_ZSWIM72)),
+     main="Densité des distances de Sørensen pour une maladie simple associée au gène ZSWIM7",
+     xlab="Distance de Sørensen",
+     ylab="Densité",
+     cex.main=0.9)
+abline(v=0.8, col="red") 
 
-
+View(or_df0)
 
 
 

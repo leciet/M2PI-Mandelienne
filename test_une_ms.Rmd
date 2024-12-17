@@ -8,6 +8,8 @@ On test ici si en prenant une maladie simple à la place de notre maladie
 complexe elle se relit à elle même en priorité.
 On utilise la maladie simple ZSWIM7 (OMIM:619834)
 
+View(or_df0)
+
 ```{r setup, include=FALSE}
 
 #On recupere la distance sorensen avec la ligne ZSWIM7 (OMIM:619834) en plus 
@@ -99,9 +101,11 @@ dist_or_sorensen_ZSWIM72 <- dist_or_sorensen_ZSWIM7[1,]
 View(dist_or_sorensen_ZSWIM72)
 
 plot(density(as.numeric(dist_or_sorensen_ZSWIM72)),
-     main="Densité des distances de Sørensen pour ZSWIM7",
-     xlab="Distance de Sørensen",
-     ylab="Densité")
+    main="Densité des distances de Sørensen pour une maladie simple associée au gène ZSWIM7",
+    xlab="Distance de Sørensen",
+    ylab="Densité",
+    cex.main=0.9)
+abline(v=0.8, col="red")  # Ajoute une ligne verticale rouge à x=0.8
 ```
 
 ```{r pressure, echo=FALSE}
