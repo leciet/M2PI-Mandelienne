@@ -123,11 +123,6 @@ poids <- poids / sum(poids)
 
 dist_consensus <- Reduce(`+`, Map(`*`, matrices, poids))
 str(dist_consensus)
-
-```
-
-```{r}
-
 ```
 
 Etape 2 bis : Comparaison des matrices entre elles
@@ -170,6 +165,8 @@ heatmap(
   main = "P-value empirique"
 )
 
+
+#Ou fonction avec les seuils à faire 
 ```
 
 ```{r}
@@ -206,6 +203,8 @@ significant_genes <- which(mean_pvalues[1, ] <= 0.05)  # Gènes avec p-value moy
 ## Etape 4 : Etablissement du couplage MC x liste(gènes)
 
 ```{r}
+#Modifier pour utiliser le vecteur des seuils calculé avant 
+
 #' AssignGene
 #' @description
 #' Assigne une liste de gènes à chaque maladie complexe, la matrice de distances a en colonne les ms et en ligne les mc
