@@ -139,7 +139,7 @@ o_sorensen <- matrice_sorensen[6126:7089,1:6125] #dataframe de la matrice des di
 
 o_sorensen_mat <- as.matrix(o_sorensen) #matrice des distances
 
-test <- AssignGene(dist_or_sorensen_mx,method = 'seuil',s = 0.84)
+test <- AssignGene(dist_or_sorensen_mx, method = 'seuil',s = 0.84)
 
 test1 <- as.data.frame(test[[1]])
 test2 <- as.data.frame(test[[2]])

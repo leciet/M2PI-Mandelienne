@@ -73,3 +73,42 @@ plot(pressure)
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+```{r pressure, echo=FALSE}
+rm(list=ls())
+```
+
+```{r pressure, echo=FALSE}
+View(dist_or_sorensen_ZSWIM7)
+```
+
+```{r pressure, echo=FALSE}
+View(test2[[1]])
+```
+
+```{r pressure, echo=FALSE}
+View(test2[[2]])
+```
+
+```{r pressure, echo=FALSE}
+
+dist_or_sorensen_ZSWIM72 <- dist_or_sorensen_ZSWIM7[1,]
+View(dist_or_sorensen_ZSWIM72)
+
+plot(density(as.numeric(dist_or_sorensen_ZSWIM72)),
+     main="Densité des distances de Sørensen pour ZSWIM7",
+     xlab="Distance de Sørensen",
+     ylab="Densité")
+```
+
+```{r pressure, echo=FALSE}
+test2 <- AssignGene(dist_or_sorensen_ZSWIM7, method = 'seuil', s = 0.8)
+b <- as.data.frame(test2[[2]])
+View(b)
+View(b[1,])
+b <- b[,-1]
+print(rowSums(b[1,], na.rm=TRUE))
+```
