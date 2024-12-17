@@ -39,3 +39,7 @@ analyser_patterns_maladies <- function(data) {
   return(resultats)
 }
 
+verif <- or_df0 %>%
+  filter(rownames(or_df0) %in% c("CD46 (OMIM:612922)", "CFI (OMIM:612923)", "THBD (OMIM:612926)"))
+
+verif <- verif[, order(-colSums(verif))]

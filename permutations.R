@@ -207,7 +207,7 @@ for(i in 1:10){
   pmin <- append(pmin,min(distances_list[[i]]))
   lines(density(t(as.matrix(distances_list[[i]]))))
 }
-    
+
 seuil <- min(pmin)
 
 abd <- as.data.frame(dist_or_sorensen_mx[c('Congenital osteodystrophies'),])
@@ -268,7 +268,3 @@ result <- sorensen %>%
     Nb_Distances_Sous_Seuil = sum(c_across(1:6125) <= threshold) ) %>%# Calculer les colonnes sous le seuil
   ungroup() %>%
   select(rowname,Nb_Distances_Sous_Seuil) # Garder uniquement les colonnes nécessaires
-
-  
-
-
