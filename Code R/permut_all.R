@@ -1,3 +1,10 @@
+
+# Application de l'algorithme de permutation sur l'ensemble des maladies complexes
+# Uniquement avec la distance de Sorensen pour le moment 
+
+
+
+
 #------------------------- Seuil -----------------------------------------------
 
 # Optimized Sorensen distance function using vectorization
