@@ -98,6 +98,9 @@ print(exact_matches)
 new_df <- new_df %>% 
   mutate_if(is.character, as.factor)
 
+sum <- 0
+for (i in 1:136) {
+  sum <- sum+length(exact_matches[[i]][[1]])
+}
 
-length(exact_matches[[1]])
 
