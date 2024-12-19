@@ -104,3 +104,29 @@ for (i in 1:136) {
 }
 
 
+df2 <- as.data.frame(sapply(new_df,gsub,pattern=":",replacement="."))
+
+# Filtrer les lignes avec au moins un match
+filtered_df <- df2[apply(df2, 1, function(row) any(row %in% colnames(or_df0))), ]
+
+
+
+# Fonction pour trouver la dernière valeur non-NA dans une ligne
+last_non_na <- function(row) {
+  row <- as.character(row) # S'assurer que les valeurs sont des chaînes
+  row <- row[!is.na(row)]  # Filtrer les valeurs non-NA
+  if (length(row) > 0) {
+    return(tail(row, 1))  # Retourner la dernière valeur
+  } else {
+    return(NA)  # Retourner NA si la ligne est entièrement NA
+  }
+}
+
+# Filtrer les lignes où la dernière valeur non-NA est dans les noms des colonnes de or_df0
+filtered_df <- df2[apply(df2, 1, function(row) last_non_na(row) %in% colnames(or_df0)), ]
+
+# Comparaison avec correspondances exactes
+exact_matches_filtered <- compare_all_columns(filtered_df)
+
+
+
