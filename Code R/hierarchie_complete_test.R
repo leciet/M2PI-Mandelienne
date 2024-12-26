@@ -52,7 +52,10 @@ colnames(df) <- paste0("Level_", seq_len(max_depth))
 
 df <- as.data.frame(df)
 df <- df %>% filter(Level_2 == 'HP:0000118')
+complete_path_phen <- df
 
+
+write_csv(complete_path_phen,'Data/Path_Phenotypes.csv')
 
 # Retirer les lignes ou la hiérarchie n'est pas complète 
 new_df <- df

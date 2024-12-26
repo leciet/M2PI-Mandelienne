@@ -50,3 +50,4 @@ liste_phenotype <- unique(liste_phenotype)[,2]
 # Sauvegarder le jeu de données ------------------------------------------------
 
 write_csv(x = liste_phenotype,file = 'Data/data_text2vec.csv')
+
