@@ -97,7 +97,7 @@ exact_matches <- compare_all_columns(new_df)
 print("Correspondances exactes :")
 print(exact_matches)
 
-
+# new_df <- Path_Phenotypes
 new_df <- new_df %>% 
   mutate_if(is.character, as.factor)
 
@@ -130,6 +130,16 @@ filtered_df <- df2[apply(df2, 1, function(row) last_non_na(row) %in% colnames(or
 
 # Comparaison avec correspondances exactes
 exact_matches_filtered <- compare_all_columns(filtered_df)
+
+
+# ajout des noms completrts de phénotypes
+library(tidyverse)
+
+new_df <- read_csv("Data/Path_Phenotypes.csv")
+new_df <- new_df %>% 
+  mutate_if(is.character, as.factor)
+
+name <- hpo$name
 
 
 
