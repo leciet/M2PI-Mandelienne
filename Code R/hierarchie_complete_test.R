@@ -14,8 +14,8 @@ library(ontologyIndex)
 hpo_url <- "https://raw.githubusercontent.com/obophenotype/human-phenotype-ontology/master/hp.obo"
 hpo <- get_ontology(hpo_url, extract_tags = 'everything')
 
+# récupération des parents
 parents <- hpo$parents
-
 
 
 # Fonction récursive pour trouver les chemins vers la racine
@@ -51,11 +51,11 @@ df <- do.call(rbind, all_paths_named)
 colnames(df) <- paste0("Level_", seq_len(max_depth))
 
 df <- as.data.frame(df)
-df <- df %>% filter(Level_2 == 'HP:0000118')
+df <- df %>% filter(Level_2 == 'HP:0000118') # récupérer la branche qui nous intéresse 
 complete_path_phen <- df
 
 
-write_csv(complete_path_phen,'Data/Path_Phenotypes.csv')
+write_csv(complete_path_phen,'Data/Path_Phenotypes.csv') #enregistrer le document 
 
 # Retirer les lignes ou la hiérarchie n'est pas complète 
 new_df <- df
@@ -66,7 +66,6 @@ for (i in 1:dim(new_df)[1]) {
     }
     
   }
-  
 }
 
 #  comparaison des colonnes
