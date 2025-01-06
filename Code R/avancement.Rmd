@@ -114,7 +114,7 @@ Nous avons identifié plusieurs méthodes pour obtenir la matrice de distance ou
 
 ![](images/schema_etape1)
 
-## 3.1. Calculs classiques 
+## 3.1. Calculs classiques
 
 2 modes de distances sont à différencier car ils influent sur l’interprétation : 
 
@@ -130,15 +130,14 @@ Nos données sont des matrices de 0 et 1 pour présence-absence. L'absence ne si
 
 Dans ce cadre, on va chercher un coefficient binaire asymétrique. Plusieurs métriques sont adaptées : 
 
--   coefficient de **Jaccard** 1900 ; Mesure de la similarité entre 2 communautés sur la base de leur richesse en espèces (ici types de maladies sur la base de leurs phénotypes). Ce coefficient n’est adapté que pour les données binaires \
-    $$D_J(x_1,x_2)=1-\frac{|x_1\cap x_2|}{|x_1|+|x_2|-|x_1\cap x_2|}=1-\frac{a}{a+b+c}$$ \
-    avec    a le nombre de phénotypes partagés entre x1 et x2, \
-    	 b le nombre d'occurrences ou x1 et x2 sont différentes \
-    	 c le nombres d’absences communes pour x1 et x2.\
+-   coefficient de **Jaccard** 1900 ; Mesure de la similarité entre 2 communautés sur la base de leur richesse en espèces (ici types de maladies sur la base de leurs phénotypes). Ce coefficient n’est adapté que pour les données binaires\
+    $$D_J(x_1,x_2)=1-\frac{|x_1\cap x_2|}{|x_1|+|x_2|-|x_1\cap x_2|}=1-\frac{a}{a+b+c}$$\
+    avec    a le nombre de phénotypes partagés entre x1 et x2,\
+    b le nombre d'occurrences ou x1 et x2 sont différentes\
+    c le nombres d’absences communes pour x1 et x2.\
     Cette distance donne un poids plus important aux présences communes. 
 
 -   coefficient de **Sorensen** 1948 ; Similaire à Jaccard à la différence qu’il donne un poids encore plus important aux doubles présences ( ce qui selon Marie Verbanck est ce que l’on recherche).\
     $$D_J(x_1,x_2)=1-\frac{2a}{2a+b+c}$$
 
--   distances **d'Ochiai** 1957 ; Très utilisée en bio-informatique notamment pour la présence et l’absence de gènes dans les organismes. (Dans notre cas on étudie la présence et l’absence de phénotypes dans les maladies).\
-    DO(x1,x2) =1- \| x1 x2\|\|x1\| \|x2\|
+-   distances **d'Ochiai** 1957 ; Très utilisée en bio-informatique notamment pour la présence et l’absence de gènes dans les organismes. (Dans notre cas on étudie la présence et l’absence de phénotypes dans les maladies). $$D_O(x_1,x_2)=1-\frac{|x_1\cap x_2|}{\sqrt{|x_1||x_2|}}$$
