@@ -10,74 +10,88 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
+
+# Nettoyage initial de l'environnement
 rm(list = ls())
 ```
 
 ```{r}
+# Chargement des bibliothèques nécessaires
 library(tidyverse)
+library(plotly)
 ```
 
-Ce document a pour objectif de décrire les questionnements et avancés réalisés durant le premier mois du projet ingénieur Mandalorian.
+Ce document résume les questionnements et les avancées réalisées durant le premier mois du projet ingénieur *Mandalorian*.
 
 # 1.Introduction
 
 ## 1.1.Compréhension du sujet
 
-Les maladies simples sont monogéniques, sur les exons et très bien étudiées. On connaît de façon précise les phénotypes qu’elles déclenchent. On peut donc identifier le lien entre phénotype et gène impliqué. \
-Au contraire, les maladies complexes sont multi-géniques et impactent d’autres régions moins connues que les exons. Il est donc difficile à partir des phénotypes de comprendre quels gènes sont impliqués. 
+Les maladies simples sont **monogéniques**, localisées sur les exons, et bien étudiées. Elles déclenchent des phénotypes précis, permettant d'identifier facilement le lien entre un phénotype et le gène impliqué.\
+En revanche, les maladies complexes sont **multigéniques** et impactent d'autres régions moins bien connues que les exons. Il est donc difficile, à partir des phénotypes, de déterminer les gènes impliqués.
 
-L’objectif final de notre étude est de proposer, pour chaque maladie complexe, une liste des gènes impliqués. Pour cela, nous exploitons les maladies simples proches de la maladie complexe étudiée afin d’identifier des phénotypes communs, ce qui nous permet de remonter aux gènes responsables grâce à la correspondance bien établie entre phénotype et gène dans le cas des maladies simples.
+**Objectif** : Proposer, pour chaque maladie complexe, une liste des gènes impliqués. Pour cela, nous exploitons les maladies simples proches d'une maladie complexe donnée pour identifier des phénotypes communs, permettant de remonter aux gènes responsables.
 
 ## 1.2.Hypothèses et postulats
 
-Nous partons du postulat qu’il est possible de comprendre les mécanismes des maladies complexes en les rapprochant de maladies simples qui leur sont similaires. 
+Nous partons des hypothèses suivantes :
+
+-   Il est possible de comprendre les maladies complexes en les rapprochant de maladies simples similaires.
+
+-   Nous négligeons l’épistasie (interactions complexes entre l'expression de plusieurs gènes).
 
 ## 1.3.Structure du projet
 
-Nous avons identifié 3 étapes majeures dans ce projet.
+Le projet s’articule autour de trois étapes principales :
 
-### Étape 1 : Calcul d'une matrice de distance ou de similarité
+1.  **Calcul d’une matrice de distance ou de similarité** : Projection des maladies simples et complexes dans un espace commun, suivi du calcul des distances.
 
-Afin d'assigner les gènes à chaque maladie complexe, il est d'abord nécessaire de projeter les maladies complexes et maladies simples dans un même espace est d'ensuite déterminer les distances entre maladies simples et maladies complexes.
+2.  **Définition d’un seuil d’assignation des gènes** : Utilisation d’un seuil global ou spécifique à chaque maladie complexe.
 
-### Étape 2 : Choix d'un seuil pour l'assignation des gènes à chaque maladie complexe
-
-L'assignation peut faire appel à un seuil individuel, calculé pour chaque maladie complexe, ou un seuil global, similaire pour chaque maladie.
-
-### Étape 3 : Interprétation
-
-Cette étape ferait appel aux LLM pour interpréter la liste de gènes assignée à chaque maladie.\
-L'étape 3 n'a pas encore débuté.
+3.  **Interprétation des résultats** : Exploitation de modèles de langage (LLMs) pour interpréter les gènes assignés. *(Étape non débutée)*
 
 # 2.Le jeu de données
 
-1 gène = plusieurs phénotypes \
-1 phénotype = plusieurs gènes\
-Maladie Simple = 1 gène = plusieurs phénotypes (ça on connait bien)\
-Maladie Complexe = plusieurs gènes = plusieurs phénotypes (on ne connaît pas les gènes mais c'est ce que l'on cherche).
+## 2.1. Structure des données
 
-## 2.1. Jeu de données sur lequel on travaille
+### Points clés :
 
-Le jeu de données initiales contient en colonne les phénotypes et en lignes les maladies simples puis complexes
+-   **Maladie simple** : 1 gène → plusieurs phénotypes (données connues).
 
-```{r include=FALSE}
+-   **Maladie complexe** : plusieurs gènes → plusieurs phénotypes (gènes inconnus mais recherchés).
+
+```{r echo=FALSE}
 load("C:/Users/lesli/OneDrive/3a/M2PI-Mendelienne/Data/data_clean0.RData")
-```
 
-```{r}
 or_df0[1:10,1:10]
 ```
 
-On a 6125 maladies simples issues de la base `omim` et 966 maladies de la base `phecode`. Sur ces 966 maladies complexes, 2 maladies n'ont pas de phénotypes communs avec les maladies simples. À savoir si nous devons retirer ces deux maladies du jeu de données.
+Les données initiales incluent des phénotypes (colonnes) et des maladies (lignes), couvrant :
 
-## 2.2.Données de base
+-   **6125 maladies simples** issues de la base `omim`.
 
-```{r}
-# Load necessary library
+-   **966 maladies complexes** issues de la base `phecode`. Parmi elles, deux maladies n'ont pas de phénotypes communs avec les maladies simples (à évaluer pour une éventuelle exclusion).
+
+Il existe une variabilité intra-maladie pour les phénotypes. Un "1" dans la matrice de présence-absence ne signifie pas que ce phénotype est observé pour l'ensemble des patients atteint de cette maladie. De même un "0" ne signifie pas forcément que le phénotype n'est pas observé pour cette maladie mais qu'il n'est pas suffisamment observé pour être considéré.
+
+On retrouve dans le jeu de données des groupes de maladies (simples et complexes) ayant les mêmes profils phénotypes. Une fréquence différente de leurs phénotypes ou une intensité phénotypique pourrait différencier ces maladies mais en l'absence d'une connaissance métier il nous est impossible de différencier ces maladies dans le jeu de données.
+
+```{r echo=FALSE}
+# chargement des groupes de maladies 
+load("Data/df_lignes_identiques.RData")
+
+head(df_lignes_identiques)
+```
+
+## 2.2. Hiérarchie phénotypique
+
+```{r echo=FALSE}
+
+# Chargement des données de phénotypes
 if (!require("ontologyIndex")) install.packages("ontologyIndex", repos = "http://cran.us.r-project.org")
 library(ontologyIndex)
 
-# Load the HPO file
+# Récupération de l'ontologie HPO
 hpo_url <- "https://raw.githubusercontent.com/obophenotype/human-phenotype-ontology/master/hp.obo"
 hpo <- get_ontology(hpo_url, extract_tags = 'everything')
 
@@ -93,9 +107,17 @@ path[1:10,1:10]
 
 ![](images/Capture%20d'écran%202024-12-18%20102307.png)
 
-La hiérarchie n'est pas linéaire. Un phénotype peut avoir plusieurs parents directs. Certaines branches de l'arbre phénotypique se séparent pour se retrouver plus tard après plus ou moins de noeuds des deux côtés. Cela entraîne un autre problème car on peut retrouveer un phénotype à plusieurs niveaux de la hiérarchie de l'arbre. Aussi, les branches ne sont pas forcément toutes développées aux même niveaux. Ainsi un niveau 3 dans une branche n'est pas forcément équivalent à un niveau 3 dans une autre branche. Enfin, nous ne sommes pas surs que nous connaissons le niveau le plus fin de phénotypes pour chaque maladie. Cela peut également entrainer des problèmes dans la comparaison des maladies dedux à deux.
+Les phénotypes suivent une hiérarchie **complexe** :
 
-```{r}
+-   Un phénotype peut avoir plusieurs parents directs.
+
+-   Certaines branches convergent après plusieurs niveaux (pas forcément le même nombre de niveaux des deux côtés).
+
+-   Les profondeurs des branches varient.
+
+-   Les niveaux les plus fins ne sont pas toujours connus, compliquant les comparaisons.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 df <- or_df0
 
 # Étape 1 : Remplacer "." par ":" dans les noms de colonnes du DataFrame
@@ -110,34 +132,146 @@ df[1:10,1:10]
 
 # 3.Calcul de la matrice de distance et/ou de similarité
 
-Nous avons identifié plusieurs méthodes pour obtenir la matrice de distance ou de similarité qui nous permettra à terme d'assigner un certains nombre de maladies simples (et donc de gènes) à chaque maladie complexe. À ces méthodes peut s'ajouter ou non un filtre de transport optimal que nous n'avons pas encore regardé dans le détail.
+Nous avons identifié plusieurs méthodes pour obtenir une matrice de distance ou de similarité entre les maladies. Ces méthodes peuvent inclure un **filtre de transport optimal**, qui reste à explorer.
 
 ![](images/schema_etape1)
 
 ## 3.1. Calculs classiques
 
-2 modes de distances sont à différencier car ils influent sur l’interprétation : 
+### Modes de distance :
 
--   Q mode → Comparaison de paires d’objets
+-   **Q-mode** : Comparaison d'objets (cas pertinent ici).
 
--   R mode → Comparaison de paires de descripteurs
+-   **R-mode** : Comparaison de descripteurs.
 
-Dans notre cas on se place plutôt dans le cas Q donc sur un calcul de similarité/distance
+Dans notre cas on se place plutôt dans le cas Q, donc sur un calcul de similarité/distance. Nos données sont des matrices de 0 et 1 pour présence-absence. L'absence ne signifie pas que le phénotype n’est pas présent mais qu’il n’est pas observé dans une part suffisante de la population. Analogie avec l’écologie (*“The species does not show a regular distribution among the sites under study”*)
 
-Nos données sont des matrices de 0 et 1 pour présence-absence. L'absence ne signifie pas que le phénotype n’est pas présent mais qu’il n’est pas observé dans une part suffisante de la population. Analogie avec l’écologie (“The species does not show a regular distribution among the sites under study”)
+Nos données étant binaires (présence/absence), plusieurs métriques asymétriques sont adaptées :
 
-*“The information “presence” has a clearer interpretation than the information “absence””*
+1.  **Coefficient de Jaccard**\
+    $$D_J(x_1, x_2) = 1 - \frac{|x_1 \cap x_2|}{|x_1| + |x_2| - |x_1 \cap x_2|}$$
 
-Dans ce cadre, on va chercher un coefficient binaire asymétrique. Plusieurs métriques sont adaptées : 
+    -   Favorise les présences communes.
 
--   coefficient de **Jaccard** 1900 ; Mesure de la similarité entre 2 communautés sur la base de leur richesse en espèces (ici types de maladies sur la base de leurs phénotypes). Ce coefficient n’est adapté que pour les données binaires\
-    $$D_J(x_1,x_2)=1-\frac{|x_1\cap x_2|}{|x_1|+|x_2|-|x_1\cap x_2|}=1-\frac{a}{a+b+c}$$\
-    avec    a le nombre de phénotypes partagés entre x1 et x2,\
-    b le nombre d'occurrences ou x1 et x2 sont différentes\
-    c le nombres d’absences communes pour x1 et x2.\
-    Cette distance donne un poids plus important aux présences communes. 
+    -   a : Nombre de phénotypes partagés.
 
--   coefficient de **Sorensen** 1948 ; Similaire à Jaccard à la différence qu’il donne un poids encore plus important aux doubles présences ( ce qui selon Marie Verbanck est ce que l’on recherche).\
-    $$D_J(x_1,x_2)=1-\frac{2a}{2a+b+c}$$
+    -   b, c : Différences entre $x_1$ et $x_2$.
 
--   distances **d'Ochiai** 1957 ; Très utilisée en bio-informatique notamment pour la présence et l’absence de gènes dans les organismes. (Dans notre cas on étudie la présence et l’absence de phénotypes dans les maladies). $$D_O(x_1,x_2)=1-\frac{|x_1\cap x_2|}{\sqrt{|x_1||x_2|}}$$
+2.  **Coefficient de Sørensen**\
+    $$D_S(x_1, x_2) = 1 - \frac{2a}{2a + b + c}$$
+
+    -   Donne plus de poids aux présences communes que Jaccard, idéal pour ce projet.
+
+3.  **Distance d’Ochiai**\
+    $$D_O(x_1, x_2) = 1 - \frac{|x_1 \cap x_2|}{\sqrt{|x_1||x_2|}}$$
+
+    -   Fréquemment utilisée en bioinformatique, notamment pour les gènes.
+
+Ces méthodes de calcul classiques présentent des limitations importantes dans le cadre de notre étude, car elles ne prennent pas en compte la hiérarchie intrinsèque des phénotypes lors du calcul des distances. En l'absence d'une prise en charge explicite de cette hiérarchie, plusieurs biais peuvent émerger :
+
+1.  **Absence de données au niveau le plus fin** : Lorsque les phénotypes les plus détaillés ne sont pas notés pour une maladie mais le sont pour une autre, cela augmente le nombre de "0" dans la matrice. Cette disparité engendre une surestimation des distances entre ces maladies, les faisant paraître plus dissemblables qu'elles ne le sont réellement.
+
+2.  **Rapprochements artificiels** : À l'inverse, deux maladies pourraient apparaître plus similaires qu'elles ne le sont en réalité si elles partagent des phénotypes communs au niveau supérieur de la hiérarchie, mais diffèrent au niveau des sous-phénotypes plus spécifiques qui ne sont pas notés. Cette simplification peut masquer des distinctions importantes et fausser les conclusions sur leurs proximités réelles.
+
+Ces biais mettent en évidence une lacune majeure des métriques binaires classiques comme Jaccard, Sorensen ou Ochiai dans notre contexte. Sans prise en compte de la structure hiérarchique des phénotypes, ces méthodes risquent d’interpréter à tort des absences ou des similitudes, conduisant à des regroupements ou des distinctions non fiables entre maladies.
+
+## 3.2. Analyses factorielles
+
+L'objectif des analyses factorielles est de projeter les maladies complexes (MC) dans un espace défini par les maladies simples (MS). Pour ce faire, les maladies complexes sont traitées comme des individus supplémentaires, tandis que l'espace de représentation est construit exclusivement à partir des maladies simples.
+
+Bien que le tableau combinant MS et MC ne contienne pas de colonnes entièrement composées de zéros, certains phénotypes peuvent être exclusifs aux MS ou aux MC. Cette spécificité complique les analyses factorielles, en particulier lorsqu'il s'agit de distinguer les **individus actifs** des **individus supplémentaires**.
+
+### 3.2.1. Analyse des Correspondances Multiples (ACM)
+
+Initialement, deux approches étaient envisagées :
+
+1.  Réaliser une ACM en traitant les phénotypes comme des variables distinctes.
+
+2.  Effectuer une AFC (Analyse Factorielle des Correspondances) en regroupant les phénotypes sous une seule variable générale "Phénotype" avec plusieurs modalités.
+
+Cependant, une AFC suppose que le tableau d’entrée est un **tableau disjonctif complet**, où chaque ligne contient exactement une modalité active (un seul "1", excluant les autres). Cela n'est pas conforme à nos données, car plusieurs phénotypes peuvent être actifs simultanément pour une même maladie. Par conséquent, l’ACM est plus adaptée.
+
+#### Résultats de l'ACM
+
+Pour des raisons computationnelles, nous avons limité l'analyse à **5 dimensions principales**. Les distances calculées incluent :
+
+-   **Distance euclidienne**
+
+-   **Distance de Manhattan**
+
+Les coordonnées des maladies complexes et simples, obtenues via l'ACM, ont permis de calculer ces distances. Cependant, ces distances sont dérivées des coordonnées initiales basées sur une **distance du chi²**, ce qui pose la question de la pertinence d'une "distance de distance".
+
+```{r}
+
+# chargement des matrices de distances 
+load(file = 'Data/distance_acm.RData')
+
+# Conversion de la matrice en tableau long
+dist_long <- as.data.frame(as.table(dist_acm_eucli_mx))
+
+# Renommer les colonnes pour ggplot
+colnames(dist_long) <- c("MC", "MS", "Distance")
+
+# Visualisation avec ggplot2
+ggplot(dist_long, aes(x = MS, y = MC, fill = Distance)) +
+  geom_tile() +
+  scale_fill_gradient(low = "beige", high = "firebrick") +
+  theme_minimal() +
+  labs(title = "ACM - Distance euclidienne",
+       x = "Maladies Simples",
+       y = "Maladies Complexes",
+       fill = "Distance")+
+  theme(axis.text = element_blank())
+
+
+```
+
+### 3.2.2. Analyse Factorielle Multiple (AFM)
+
+L'AFM était envisagée comme une méthode pour intégrer la **hiérarchie des phénotypes** dans l'analyse. Cette méthode permettrait de regrouper les variables en blocs distincts, reflétant les niveaux hiérarchiques des phénotypes.
+
+#### Difficultés rencontrées
+
+L'idée a été abandonnée en raison de plusieurs problèmes inhérents à la hiérarchie des phénotypes :
+
+1.  **Non-linéarité** : Les phénotypes peuvent appartenir à plusieurs branches ou niveaux de l'arbre.
+
+2.  **Développement inégal des branches** : Certaines branches sont beaucoup plus détaillées que d'autres, rendant les comparaisons entre niveaux complexes et biaisées.
+
+3.  **Données incomplètes** : Le niveau le plus fin des phénotypes pour certaines maladies n'est pas toujours disponible, ce qui réduit la cohérence des comparaisons.
+
+Ces limitations rendent l'AFM moins appropriée pour notre problématique actuelle.
+
+## 3.3.Embedding
+
+Pour contourner les limitations liées à la hiérarchie des phénotypes, nous explorons l’utilisation de l’**embedding**, une technique permettant de représenter des mots, des phrases ou des entités sous forme de vecteurs dans un espace numérique. Cette méthode offre une alternative puissante et flexible aux approches classiques de calcul de distances, en particulier dans notre contexte.
+
+#### Processus d’Embedding Utilisé
+
+L’embedding repose sur la vectorisation de mots individuels ou de phrases entières :
+
+1.  Chaque mot de la phrase est converti en un vecteur dans un espace vectoriel pré-entraîné.
+
+2.  Pour représenter une phrase ou une entité, comme une maladie, la moyenne des vecteurs des mots individuels est calculée.
+
+3.  Une matrice de similarité, telle que celle basée sur le cosinus, est ensuite construite pour mesurer les proximités entre entités.
+
+#### Modèles d’Embedding Utilisés
+
+Nous avons exploré des modèles avancés basés sur l'architecture BERT, notamment :
+
+-   **RoBERTa (Robustly Optimized BERT Approach)** : Améliore BERT avec des optimisations dans l’entraînement, particulièrement adaptées pour des tâches nécessitant une compréhension fine des relations sémantiques.
+
+-   **HessBERT** : Une variante optimisée de BERT pour des applications spécifiques.
+
+Ces modèles utilisent une technique appelée **modélisation du langage masqué**, où des mots aléatoires dans une phrase sont masqués pour entraîner le modèle à prédire les mots manquants. Cela diffère de modèles comme GPT, qui apprennent de manière non supervisée en prédisant le mot suivant dans une séquence.
+
+#### Application de l’Embedding au Contexte des Maladies
+
+Pour générer des embeddings adaptés aux maladies complexes, nous utilisons un **prompt spécifique** qui contextualise les phénotypes de chaque maladie :
+
+> *"We are a group of individuals suffering from the same disease, but it manifests itself differently in each of us. Here is a list of the symptoms we may experience: [...]"*
+
+Ce prompt met en avant les variations intra-maladie tout en conservant une structure commune pour faciliter la vectorisation. Les vecteurs obtenus permettent ensuite de calculer des matrices de distance ou de similarité entre maladies.
+
+## 3.4.Transport Optimal (TO)
