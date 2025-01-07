@@ -28,9 +28,9 @@ Ce document résume les questionnements et les avancées réalisées durant le p
 ## 1.1.Compréhension du sujet
 
 Les maladies simples sont **monogéniques**, localisées sur les exons, et bien étudiées. Elles déclenchent des phénotypes précis, permettant d'identifier facilement le lien entre un phénotype et le gène impliqué.\
-En revanche, les maladies complexes sont **multigéniques** et impactent d'autres régions moins bien connues que les exons. Il est donc difficile, à partir des phénotypes, de déterminer les gènes impliqués.
+En revanche, les maladies complexes sont **multigéniques** et peuvent impacter d'autres régions moins bien connues que les exons. Il est donc difficile, à partir des phénotypes, de déterminer les gènes impliqués.
 
-**Objectif** : Proposer, pour chaque maladie complexe, une liste des gènes impliqués. Pour cela, nous exploitons les maladies simples proches d'une maladie complexe donnée pour identifier des phénotypes communs, permettant de remonter aux gènes responsables.
+**Objectif du projet** : Proposer, pour chaque maladie complexe, une liste des gènes impliqués. Pour cela, nous exploitons les maladies simples proches d'une maladie complexe donnée pour identifier des phénotypes communs, permettant de remonter aux gènes responsables.
 
 ## 1.2.Hypothèses et postulats
 
@@ -38,7 +38,7 @@ Nous partons des hypothèses suivantes :
 
 -   Il est possible de comprendre les maladies complexes en les rapprochant de maladies simples similaires.
 
--   Nous négligeons l’épistasie (interactions complexes entre l'expression de plusieurs gènes).
+-   Nous négligeons l’épistasie (interaction complexe entre l'expression de plusieurs gènes).
 
 ## 1.3.Structure du projet
 
@@ -107,15 +107,15 @@ path[1:10,1:10]
 
 ![](images/Capture%20d'écran%202024-12-18%20102307.png)
 
-Les phénotypes suivent une hiérarchie **complexe** :
+#### Problème intrinsèque aux données 
 
--   Un phénotype peut avoir plusieurs parents directs.
+Un point important soulevé concerne la gestion de la hiérarchie des phénotypes. Ces derniers sont organisés en niveaux de granularité variable (allant de 1 à 12), ce qui engendre plusieurs problématiques. Lorsqu'on compare des maladies avec  des phénotypes appartenant à des niveaux hiérarchiques différents (par exemple, un phénotype le plus fin de niveau 3 avec un phénotype le plus fin de niveau 8), on se heurte à plusieurs difficultés :
 
--   Certaines branches convergent après plusieurs niveaux (pas forcément le même nombre de niveaux des deux côtés).
+-   **Incohérence d'échelle** : Comparer deux maladies avec des phénotypes de niveaux différents revient à confronter des informations qui ne sont pas directement comparables. Un phénotype de niveau 8 contient une quantité d’information beaucoup plus précise et détaillée qu’un phénotype de niveau 3. De plus, la manière dont nous avons construit les phénotypes, en attribuant des "1" à tous les phénotypes parents lorsqu’un phénotype enfant (plus fin) est rencontré, entraîne une différence de poids entre les différentes branches. Certaines branches, contenant des phénotypes enfants, ont un poids plus important, car elles comportent davantage de "1", ce qui peut fausser les comparaisons.
 
--   Les profondeurs des branches varient.
+-   **Perte d'information** : Une maladie associée uniquement à des phénotypes de niveau 3 (moins détaillés) risque de manquer d’informations par rapport à une maladie qui inclut des phénotypes de niveau 3, mais aussi des niveaux plus fins (par exemple, niveaux 4, 5 ou 6). La question se pose alors : une maladie qui se limite à des phénotypes de niveau 3 est-elle vraiment au "niveau le plus fin", ou lui manque-t-il des informations essentielles ? Faut-il l'éloigner d'une maladie qui couvre ces mêmes phénotypes, mais avec des niveaux plus détaillés ? Cette différence pourrait rendre difficile l’identification de relations pertinentes entre les maladies
 
--   Les niveaux les plus fins ne sont pas toujours connus, compliquant les comparaisons.
+D’autre part, l’idée d’éloigner une maladie moins détaillée pourrait sembler raisonnable si l’on cherche à maximiser la correspondance exacte des phénotypes. Toutefois, cela pourrait entraîner une perte d’informations pertinentes. En effet, une maladie avec des phénotypes moins détaillés pourrait encore partager des traits fondamentaux avec une maladie plus détaillée, même si elle n’inclut pas tous les niveaux fins. 
 
 ```{r message=FALSE, warning=FALSE}
 df <- or_df0
@@ -144,12 +144,12 @@ Nous avons identifié plusieurs méthodes pour obtenir une matrice de distance o
 
 -   **R-mode** : Comparaison de descripteurs.
 
-Dans notre cas on se place plutôt dans le cas Q, donc sur un calcul de similarité/distance. Nos données sont des matrices de 0 et 1 pour présence-absence. L'absence ne signifie pas que le phénotype n’est pas présent mais qu’il n’est pas observé dans une part suffisante de la population. Analogie avec l’écologie (*“The species does not show a regular distribution among the sites under study”*)
+Dans notre cas on se place plutôt dans le cas Q, donc sur un calcul de similarité/distance. Nos données sont des matrices de 0 et 1 pour présence-absence. L'absence ne signifie pas que le phénotype n’est pas présent mais qu’il n’est pas observé dans la population étudiée. Analogie avec l’écologie (*“The species does not show a regular distribution among the sites under study”*)
 
 Nos données étant binaires (présence/absence), plusieurs métriques asymétriques sont adaptées :
 
 1.  **Coefficient de Jaccard**\
-    $$D_J(x_1, x_2) = 1 - \frac{|x_1 \cap x_2|}{|x_1| + |x_2| - |x_1 \cap x_2|}$$
+    $$D_J(x_1, x_2) = 1 - \frac{|x_1 \cap x_2|}{|x_1| + |x_2| - |x_1 \cap x_2|}=1 - \frac{a}{a + b + c}$$
 
     -   Favorise les présences communes.
 
@@ -337,16 +337,24 @@ Ensuite, pour chaque permutation, nous recalculons la distance entre la maladie 
 
 Lors de chaque permutation, on retient la **valeur minimale** des distances obtenues, et cette valeur constitue un seuil critique. Ce seuil est considéré comme une valeur de distance en dessous de laquelle une association est jugée significative. Enfin, la **distance observée** entre la maladie complexe réelle (non permutée) et les maladies simples est comparée à cette distribution empirique. Si cette distance observée est inférieure à la valeur minimale de la distribution empirique, on conclut que l’association entre la maladie complexe et les maladies simples est significative et donc **non due au hasard**.
 
-#### Problème intrinsèque aux données 
+#### Impact des contraintes hiérarchiques sur les permutations
 
-Un point important soulevé concerne la gestion de la hiérarchie des phénotypes. Ces derniers sont organisés en niveaux de granularité variable (allant de 1 à 12), ce qui engendre plusieurs problématiques. Lorsqu'on compare des maladies avec  des phénotypes appartenant à des niveaux hiérarchiques différents (par exemple, un phénotype le plus fin de niveau 3 avec un phénotype le plus fin de niveau 8), on se heurte à plusieurs difficultés :
+Les permutations consistent à modifier aléatoirement les associations entre une maladie complexe et les maladies simples, tout en conservant la proportion de phénotypes activés (0 ou 1). Cependant, dans une structure hiérarchique :
 
--   **Incohérence d'échelle** : Comparer deux maladies avec des phénotypes de niveaux différents revient à confronter des informations qui ne sont pas directement comparables. Un phénotype de niveau 8 contient une quantité d’information beaucoup plus précise et détaillée qu’un phénotype de niveau 3. De plus, la manière dont nous avons construit les phénotypes, en attribuant des "1" à tous les phénotypes parents lorsqu’un phénotype enfant (plus fin) est rencontré, entraîne une différence de poids entre les différentes branches. Certaines branches, contenant des phénotypes enfants, ont un poids plus important, car elles comportent davantage de "1", ce qui peut fausser les comparaisons.
+1.  **Impossibilité d’activation indépendante des phénotypes :**
 
--   **Perte d'information** : Une maladie associée uniquement à des phénotypes de niveau 3 (moins détaillés) risque de manquer d’informations par rapport à une maladie qui inclut des phénotypes de niveau 3, mais aussi des niveaux plus fins (par exemple, niveaux 4, 5 ou 6). La question se pose alors : une maladie qui se limite à des phénotypes de niveau 3 est-elle vraiment au "niveau le plus fin", ou lui manque-t-il des informations essentielles ? Faut-il l'éloigner d'une maladie qui couvre ces mêmes phénotypes, mais avec des niveaux plus détaillés ? Cette différence pourrait rendre difficile l’identification de relations pertinentes entre les maladies
+    -   Si un phénotype est activé lors de la permutation, tous ses parents doivent également être activés, ce qui limite fortement les configurations possibles.
 
-D’autre part, l’idée d’éloigner une maladie moins détaillée pourrait sembler raisonnable si l’on cherche à maximiser la correspondance exacte des phénotypes. Toutefois, cela pourrait entraîner une perte d’informations pertinentes. En effet, une maladie avec des phénotypes moins détaillés pourrait encore partager des traits fondamentaux avec une maladie plus détaillée, même si elle n’inclut pas tous les niveaux fins. 
+    -   Cela biaise les permutations en les éloignant de véritables scénarios aléatoires.
 
-Le véritable défi réside dans la gestion de cette hiérarchie, qui peut entraîner une **perte d’information importante** pour certaines maladies dont les données ne sont pas au niveau le plus fin.
+2.  **Propagation arbitraire des activations vers les enfants :**
+
+    -   Lorsque qu’un phénotype parent est activé, ses enfants doivent l’être également.
+
+    -   Cela favorise certaines branches de la hiérarchie, donnant plus de poids à ces phénotypes et créant une surreprésentation artificielle de certaines associations.
+
+3.  **Conservation de la proportion 0/1 déformée :**
+
+    -   Les proportions initiales de phénotypes activés (0 et 1) dans les données réelles ne sont plus respectées après permutation, car les activations propagées à travers la hiérarchie modifient ces proportions.
 
 # 5.Grands Modèles de Language (LLM)
