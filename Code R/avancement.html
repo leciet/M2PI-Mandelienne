@@ -444,6 +444,9 @@ modèles de langage (LLMs) pour interpréter les gènes assignés.
 <li><p><strong>Maladie complexe</strong> : plusieurs gènes → plusieurs
 phénotypes (gènes inconnus mais recherchés).</p></li>
 </ul>
+<pre class="r"><code>load(&quot;C:/Users/lesli/OneDrive/3a/M2PI-Mendelienne/Data/data_clean0.RData&quot;)
+
+or_df0[1:10,1:10]</code></pre>
 <pre><code>##                     HP.0000002 HP.0000003 HP.0000008 HP.0000009 HP.0000010
 ## A2ML1 (OMIM:166760)          0          0          0          0          0
 ## AAAS (OMIM:231550)           1          0          0          0          0
@@ -488,6 +491,10 @@ différente de leurs phénotypes ou une intensité phénotypique pourrait
 différencier ces maladies mais en l’absence d’une connaissance métier il
 nous est impossible de différencier ces maladies dans le jeu de
 données.</p>
+<pre class="r"><code># chargement des groupes de maladies 
+load(&quot;Data/df_lignes_identiques.RData&quot;)
+
+head(df_lignes_identiques)</code></pre>
 <pre><code>##   Pattern_ID
 ## 1          1
 ## 2          2
@@ -527,20 +534,22 @@ données.</p>
 </div>
 <div id="hiérarchie-phénotypique" class="section level2">
 <h2>2.2. Hiérarchie phénotypique</h2>
-<pre><code>## Le chargement a nécessité le package : ontologyIndex</code></pre>
-<pre><code>## Warning: le package &#39;ontologyIndex&#39; a été compilé avec la version R 4.4.2</code></pre>
-<pre><code>## Warning: One or more parsing issues, call `problems()` on your data frame for details,
-## e.g.:
-##   dat &lt;- vroom(...)
-##   problems(dat)</code></pre>
-<pre><code>## Rows: 94311 Columns: 17</code></pre>
-<pre><code>## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (16): Level_1, Level_2, Level_3, Level_4, Level_5, Level_6, Level_7, Lev...
-## lgl  (1): Level_17
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code># Chargement des données de phénotypes
+if (!require(&quot;ontologyIndex&quot;)) install.packages(&quot;ontologyIndex&quot;, repos = &quot;http://cran.us.r-project.org&quot;)
+library(ontologyIndex)
+
+# Récupération de l&#39;ontologie HPO
+hpo_url &lt;- &quot;https://raw.githubusercontent.com/obophenotype/human-phenotype-ontology/master/hp.obo&quot;
+hpo &lt;- get_ontology(hpo_url, extract_tags = &#39;everything&#39;)
+
+
+path &lt;- read_csv(&quot;Data/Path_Phenotypes.csv&quot;)
+path &lt;- path %&gt;% 
+  mutate_if(is.character, as.factor)
+
+phenotype_names &lt;- as.list(hpo$name)
+
+path[1:10,1:10]</code></pre>
 <pre><code>## # A tibble: 10 × 10
 ##    Level_1    Level_2    Level_3 Level_4 Level_5 Level_6 Level_7 Level_8 Level_9
 ##    &lt;fct&gt;      &lt;fct&gt;      &lt;fct&gt;   &lt;fct&gt;   &lt;fct&gt;   &lt;fct&gt;   &lt;fct&gt;   &lt;fct&gt;   &lt;fct&gt;  
@@ -565,6 +574,16 @@ forcément le même nombre de niveaux des deux côtés).</p></li>
 <li><p>Les niveaux les plus fins ne sont pas toujours connus,
 compliquant les comparaisons.</p></li>
 </ul>
+<pre class="r"><code>df &lt;- or_df0
+
+# Étape 1 : Remplacer &quot;.&quot; par &quot;:&quot; dans les noms de colonnes du DataFrame
+formatted_colnames &lt;- gsub(&quot;\\.&quot;, &quot;:&quot;, colnames(df))
+
+# Étape 2 : Remplacer les noms des colonnes en fonction du vecteur de correspondance
+colnames(df) &lt;- phenotype_names[formatted_colnames]
+
+# Résultat
+df[1:10,1:10]</code></pre>
 <pre><code>##                     Abnormality of body height Multicystic kidney dysplasia
 ## A2ML1 (OMIM:166760)                          0                            0
 ## AAAS (OMIM:231550)                           1                            0
@@ -858,7 +877,175 @@ ou de similarité entre maladies.</p>
 </div>
 <div id="transport-optimal-to" class="section level2">
 <h2>3.4.Transport Optimal (TO)</h2>
+<p>Le transport optimal est une méthode <strong>holistique et
+exhaustive</strong> permettant d’établir des correspondances entre les
+maladies mendéliennes et complexes. Son principal objectif est de
+<strong>minimiser une distance globale</strong> entre tous les gènes
+possibles, tout en considérant un ensemble complet de données.</p>
+<p><strong>1. Avantages majeurs du transport optimal :</strong></p>
+<ul>
+<li><p><strong>Exhaustivité des gènes étudiés :</strong><br />
+Contrairement à d’autres approches qui limitent l’analyse à un
+sous-ensemble de gènes ou de maladies, le transport optimal vise à
+“transporter tout sur tout”. Cela garantit une prise en compte
+exhaustive de l’ensemble des gènes et phénotypes, sans restriction
+initiale.</p></li>
+<li><p><strong>Dimension globale :</strong><br />
+En produisant une matrice de transport couvrant l’ensemble des relations
+possibles, cette méthode réduit les biais locaux qui pourraient survenir
+avec des algorithmes plus restreints.</p></li>
+<li><p><strong>Efficacité algorithmique :</strong><br />
+Grâce aux avancées récentes, les problèmes de transport optimal peuvent
+désormais être résolus de manière performante et rapide, ce qui renforce
+leur pertinence dans notre contexte.</p></li>
+</ul>
+<p><strong>2. Limites et questions soulevées :</strong></p>
+<p>Bien que le transport optimal soit présenté comme une méthode globale
+et exhaustive, plusieurs interrogations subsistent quant à son
+application dans notre cas particulier :</p>
+<ul>
+<li><p><strong>Pondération des maladies complexes :</strong><br />
+Pourquoi attribuer des poids différents aux maladies complexes en
+fonction de leur gravité ou du nombre de phénotypes associés, alors
+qu’aucune contrainte n’est imposée sur le nombre de maladies complexes
+auxquelles une maladie simple peut être liée ?</p></li>
+<li><p><strong>Systèmes de pondération asymétriques :</strong><br />
+Actuellement, deux systèmes de pondération distincts sont utilisés pour
+les maladies simples et complexes. Cette séparation pourrait introduire
+une asymétrie qui biaise les résultats. Une solution possible serait
+d’unifier ces systèmes, en attribuant un poids unique à chaque maladie,
+basé par exemple sur le nombre de phénotypes associés.</p></li>
+</ul>
+<p><strong>3. État actuel du projet :</strong></p>
+<p>Pour le moment, le transport optimal <strong>n’a pas encore été
+appliqué</strong> dans nos méthodes. Une analyse comparative est en
+cours pour évaluer les résultats existants obtenus sur le projet avec et
+sans utilisation du transport optimal. Cette comparaison permettra de
+déterminer les différences entre cette méthode et nos résultats
+actuels.</p>
 </div>
+</div>
+<div id="obtention-dune-matrice-dassignation" class="section level1">
+<h1>4.Obtention d’une matrice d’assignation</h1>
+<p>Une des étapes importante du workflow consiste à passer de la matrice
+de distance à la matrice d’assignation. Pour cela il faut identifier un
+seuil à partir duquel on associe une maladie simple à une complexe.
+Plusieurs approches ont été testées pour déterminer un seuil
+pertinent. </p>
+<div id="seuil-global" class="section level2">
+<h2>4.1.Seuil global</h2>
+<p>Ce seuil est fixe et s’applique à l’ensemble des maladies, en
+déterminant une distance maximale acceptable entre une maladie complexe
+et un gène.</p>
+</div>
+<div id="seuil-individuel" class="section level2">
+<h2>4.2.Seuil individuel</h2>
+<p>Ce seuil est défini en fonction des quantiles de la distribution des
+distances pour chaque maladie, permettant ainsi une certaine
+individualisation du seuil en fonction de chaque cas.</p>
+<p>Cependant, l’approche du seuil individuel présente des limitations.
+En effet, cela conduit souvent à de nombreuses assignations, même pour
+des distances très grandes (par exemple, supérieures à 0.9), notamment
+pour les maladies complexes. En outre, la matrice de distance de base
+influence fortement le résultat de l’assignation des gènes.</p>
+</div>
+<div id="seuil-critique" class="section level2">
+<h2>4.3.Seuil critique</h2>
+<p>Afin de rendre la sélection du seuil plus robuste, nous avons trouvé
+intéressant d’introduire un <strong>seuil critique</strong>, similaire à
+une <strong>p-value critique</strong>. Il a donc fallu que nous
+l’estimions. Ceci est possible de deux façons. </p>
+<div id="estimation-de-la-p-value-empirique-par-proportion" class="section level3">
+<h3>4.3.1.Estimation de la P-value empirique par proportion</h3>
+<p>Cela consiste à approximativement calculer la p-value à partir de la
+matrice des distances en observant la proportion de distances
+inférieures à la distance considérée.</p>
+</div>
+<div id="estimation-de-la-p-value-empirique-par-permutations" class="section level3">
+<h3>4.3.2.Estimation de la P-value empirique par permutations</h3>
+<p>Cette méthode repose sur la permutation d’un maladie complexe dans le
+jeu de données initiale (en modifiant aléatoirement les associations
+entre maladies complexes et simples en changeant son phénotype), puis en
+calculant de nouveau les distances entre la maladie complexe permutée et
+les autres maladies.</p>
+<p>L’idée derrière la p-value par permutation est de tester l’hypothèse
+nulle H0​ selon laquelle <strong>il n’existe pas de liens
+d’association</strong> entre une maladie complexe et les maladies
+simples. À l’inverse, l’hypothèse alternative H1​ stipule qu’il existe
+bien une association significative.</p>
+<p>Pour tester cette hypothèse, nous effectuons un <strong>test de
+randomisation</strong>, qui consiste à casser la structure de
+l’association présumée entre la maladie complexe et les autres maladies
+simples. Concrètement, cela revient à permuter les valeurs binaires (0
+et 1) associées à chaque maladie complexe, tout en conservant les
+données des maladies simples inchangées et la proportion de 0 et de 1
+pour chaque maladie complexe. Ces permutations “casseront” les
+associations naturelles et généreront des configurations aléatoires.</p>
+<p>Ensuite, pour chaque permutation, nous recalculons la distance entre
+la maladie complexe permutée et les maladies simples. En répétant ce
+processus de nombreuses fois, on obtient une <strong>distribution
+empirique des distances</strong>, qui reflète la variation des distances
+dans le cas où il n’y aurait aucune association réelle, c’est-à-dire
+sous l’hypothèse nulle.</p>
+<p>Lors de chaque permutation, on retient la <strong>valeur
+minimale</strong> des distances obtenues, et cette valeur constitue un
+seuil critique. Ce seuil est considéré comme une valeur de distance en
+dessous de laquelle une association est jugée significative. Enfin, la
+<strong>distance observée</strong> entre la maladie complexe réelle (non
+permutée) et les maladies simples est comparée à cette distribution
+empirique. Si cette distance observée est inférieure à la valeur
+minimale de la distribution empirique, on conclut que l’association
+entre la maladie complexe et les maladies simples est significative et
+donc <strong>non due au hasard</strong>.</p>
+<div id="problème-intrinsèque-aux-données" class="section level4">
+<h4>Problème intrinsèque aux données </h4>
+<p>Un point important soulevé concerne la gestion de la hiérarchie des
+phénotypes. Ces derniers sont organisés en niveaux de granularité
+variable (allant de 1 à 12), ce qui engendre plusieurs problématiques.
+Lorsqu’on compare des maladies avec  des phénotypes appartenant à des
+niveaux hiérarchiques différents (par exemple, un phénotype le plus fin
+de niveau 3 avec un phénotype le plus fin de niveau 8), on se heurte à
+plusieurs difficultés :</p>
+<ul>
+<li><p><strong>Incohérence d’échelle</strong> : Comparer deux maladies
+avec des phénotypes de niveaux différents revient à confronter des
+informations qui ne sont pas directement comparables. Un phénotype de
+niveau 8 contient une quantité d’information beaucoup plus précise et
+détaillée qu’un phénotype de niveau 3. De plus, la manière dont nous
+avons construit les phénotypes, en attribuant des “1” à tous les
+phénotypes parents lorsqu’un phénotype enfant (plus fin) est rencontré,
+entraîne une différence de poids entre les différentes branches.
+Certaines branches, contenant des phénotypes enfants, ont un poids plus
+important, car elles comportent davantage de “1”, ce qui peut fausser
+les comparaisons.</p></li>
+<li><p><strong>Perte d’information</strong> : Une maladie associée
+uniquement à des phénotypes de niveau 3 (moins détaillés) risque de
+manquer d’informations par rapport à une maladie qui inclut des
+phénotypes de niveau 3, mais aussi des niveaux plus fins (par exemple,
+niveaux 4, 5 ou 6). La question se pose alors : une maladie qui se
+limite à des phénotypes de niveau 3 est-elle vraiment au “niveau le plus
+fin”, ou lui manque-t-il des informations essentielles ? Faut-il
+l’éloigner d’une maladie qui couvre ces mêmes phénotypes, mais avec des
+niveaux plus détaillés ? Cette différence pourrait rendre difficile
+l’identification de relations pertinentes entre les maladies</p></li>
+</ul>
+<p>D’autre part, l’idée d’éloigner une maladie moins détaillée pourrait
+sembler raisonnable si l’on cherche à maximiser la correspondance exacte
+des phénotypes. Toutefois, cela pourrait entraîner une perte
+d’informations pertinentes. En effet, une maladie avec des phénotypes
+moins détaillés pourrait encore partager des traits fondamentaux avec
+une maladie plus détaillée, même si elle n’inclut pas tous les niveaux
+fins. </p>
+<p>Le véritable défi réside dans la gestion de cette hiérarchie, qui
+peut entraîner une <strong>perte d’information importante</strong> pour
+certaines maladies dont les données ne sont pas au niveau le plus
+fin.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="grands-modèles-de-language-llm" class="section level1">
+<h1>5.Grands Modèles de Language (LLM)</h1>
 </div>
 
 
