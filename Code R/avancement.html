@@ -9,7 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Leslie Cieters" />
+<meta name="author" content="Leslie Cieters &amp; Nemo Didier &amp; Sara Larcher" />
 
 <meta name="date" content="2024-12-26" />
 
@@ -351,7 +351,8 @@ display: none;
 
 
 <h1 class="title toc-ignore">Note d’avancement</h1>
-<h4 class="author">Leslie Cieters</h4>
+<h4 class="author">Leslie Cieters &amp; Nemo Didier &amp; Sara
+Larcher</h4>
 <h4 class="date">2024-12-26</h4>
 
 </div>
@@ -404,8 +405,9 @@ impliqués.</p>
 <p><strong>Objectif du projet</strong> : Proposer, pour chaque maladie
 complexe, une liste des gènes impliqués. Pour cela, nous exploitons les
 maladies simples proches d’une maladie complexe donnée pour identifier
-des phénotypes communs, permettant de remonter aux gènes
-responsables.</p>
+des phénotypes communs, permettant de définir une liste de gènes
+potentiellement responsables de la maladie complexe afin d’orienter la
+recherche.</p>
 </div>
 <div id="hypothèses-et-postulats" class="section level2">
 <h2>1.2.Hypothèses et postulats</h2>
@@ -431,6 +433,15 @@ complexe.</p></li>
 modèles de langage (LLMs) pour interpréter les gènes assignés.
 <em>(Étape non débutée)</em></p></li>
 </ol>
+<p>Au cours de ce projet, nous avons adopté des <strong>approches
+individuelles</strong>, où chaque maladie complexe est analysée
+séparément pour déterminer des associations avec des maladies simples,
+notamment par l’ajustement des seuils. Une alternative consiste à
+envisager une <strong>approche ensembliste</strong>, où toutes les
+maladies complexes et simples seraient considérées simultanément pour
+établir un système global d’associations. Une méthode clé pour cela est
+le <strong>transport optimal</strong>, qui peut offrir plusieurs
+avantages.</p>
 </div>
 </div>
 <div id="le-jeu-de-données" class="section level1">
@@ -484,8 +495,8 @@ exclusion).</p></li>
 dans la matrice de présence-absence ne signifie pas que ce phénotype est
 observé pour l’ensemble des patients atteint de cette maladie. De même
 un “0” ne signifie pas forcément que le phénotype n’est pas observé pour
-cette maladie mais qu’il n’est pas suffisamment observé pour être
-considéré.</p>
+cette maladie mais qu’il n’est pas observé dans la population
+étudiée.</p>
 <p>On retrouve dans le jeu de données des groupes de maladies (simples
 et complexes) ayant les mêmes profils phénotypes. Une fréquence
 différente de leurs phénotypes ou une intensité phénotypique pourrait

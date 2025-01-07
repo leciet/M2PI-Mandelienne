@@ -1,6 +1,6 @@
 ---
 title: "Note d'avancement"
-author: "Leslie Cieters"
+author: "Leslie Cieters & Nemo Didier & Sara Larcher"
 date: "2024-12-26"
 output: html_document
 ---
@@ -30,7 +30,7 @@ Ce document résume les questionnements et les avancées réalisées durant le p
 Les maladies simples sont **monogéniques**, localisées sur les exons, et bien étudiées. Elles déclenchent des phénotypes précis, permettant d'identifier facilement le lien entre un phénotype et le gène impliqué.\
 En revanche, les maladies complexes sont **multigéniques** et peuvent impacter d'autres régions moins bien connues que les exons. Il est donc difficile, à partir des phénotypes, de déterminer les gènes impliqués.
 
-**Objectif du projet** : Proposer, pour chaque maladie complexe, une liste des gènes impliqués. Pour cela, nous exploitons les maladies simples proches d'une maladie complexe donnée pour identifier des phénotypes communs, permettant de remonter aux gènes responsables.
+**Objectif du projet** : Proposer, pour chaque maladie complexe, une liste des gènes impliqués. Pour cela, nous exploitons les maladies simples proches d'une maladie complexe donnée pour identifier des phénotypes communs, permettant de définir une liste de gènes potentiellement responsables de la maladie complexe afin d'orienter la recherche.
 
 ## 1.2.Hypothèses et postulats
 
@@ -49,6 +49,8 @@ Le projet s’articule autour de trois étapes principales :
 2.  **Définition d’un seuil d’assignation des gènes** : Utilisation d’un seuil global ou spécifique à chaque maladie complexe.
 
 3.  **Interprétation des résultats** : Exploitation de modèles de langage (LLMs) pour interpréter les gènes assignés. *(Étape non débutée)*
+
+Au cours de ce projet, nous avons adopté des **approches individuelles**, où chaque maladie complexe est analysée séparément pour déterminer des associations avec des maladies simples, notamment par l'ajustement des seuils. Une alternative consiste à envisager une **approche ensembliste**, où toutes les maladies complexes et simples seraient considérées simultanément pour établir un système global d'associations. Une méthode clé pour cela est le **transport optimal**, qui peut offrir plusieurs avantages.
 
 # 2.Le jeu de données
 
@@ -72,7 +74,7 @@ Les données initiales incluent des phénotypes (colonnes) et des maladies (lign
 
 -   **966 maladies complexes** issues de la base `phecode`. Parmi elles, deux maladies n'ont pas de phénotypes communs avec les maladies simples (à évaluer pour une éventuelle exclusion).
 
-Il existe une variabilité intra-maladie pour les phénotypes. Un "1" dans la matrice de présence-absence ne signifie pas que ce phénotype est observé pour l'ensemble des patients atteint de cette maladie. De même un "0" ne signifie pas forcément que le phénotype n'est pas observé pour cette maladie mais qu'il n'est pas suffisamment observé pour être considéré.
+Il existe une variabilité intra-maladie pour les phénotypes. Un "1" dans la matrice de présence-absence ne signifie pas que ce phénotype est observé pour l'ensemble des patients atteint de cette maladie. De même un "0" ne signifie pas forcément que le phénotype n'est pas observé pour cette maladie mais qu'il n'est pas observé dans la population étudiée.
 
 On retrouve dans le jeu de données des groupes de maladies (simples et complexes) ayant les mêmes profils phénotypes. Une fréquence différente de leurs phénotypes ou une intensité phénotypique pourrait différencier ces maladies mais en l'absence d'une connaissance métier il nous est impossible de différencier ces maladies dans le jeu de données.
 
