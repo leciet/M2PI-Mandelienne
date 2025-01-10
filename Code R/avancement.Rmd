@@ -2,7 +2,11 @@
 title: "Note d'avancement"
 author: "Leslie Cieters & Nemo Didier & Sara Larcher"
 date: "2024-12-26"
-output: html_document
+output: 
+  html_document :
+    toc: false
+    number_sections: true
+    theme : paper
 ---
 
 ```{r setup, include=FALSE}
@@ -10,7 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-
 # Nettoyage initial de l'environnement
 rm(list = ls())
 ```
@@ -23,16 +26,16 @@ library(plotly)
 
 Ce document résume les questionnements et les avancées réalisées durant le premier mois du projet ingénieur *Mandalorian*.
 
-# 1.Introduction
+# Introduction
 
-## 1.1.Compréhension du sujet
+## Compréhension du sujet
 
 Les maladies simples sont **monogéniques**, localisées sur les exons, et bien étudiées. Elles déclenchent des phénotypes précis, permettant d'identifier facilement le lien entre un phénotype et le gène impliqué.\
 En revanche, les maladies complexes sont **multigéniques** et peuvent impacter d'autres régions moins bien connues que les exons. Il est donc difficile, à partir des phénotypes, de déterminer les gènes impliqués.
 
 **Objectif du projet** : Proposer, pour chaque maladie complexe, une liste des gènes impliqués. Pour cela, nous exploitons les maladies simples proches d'une maladie complexe donnée pour identifier des phénotypes communs, permettant de définir une liste de gènes potentiellement responsables de la maladie complexe afin d'orienter la recherche.
 
-## 1.2.Hypothèses et postulats
+## Hypothèses et postulats
 
 Nous partons des hypothèses suivantes :
 
@@ -40,7 +43,7 @@ Nous partons des hypothèses suivantes :
 
 -   Nous négligeons l’épistasie (interaction complexe entre l'expression de plusieurs gènes).
 
-## 1.3.Structure du projet
+## Structure du projet
 
 Le projet s’articule autour de trois étapes principales :
 
@@ -52,9 +55,9 @@ Le projet s’articule autour de trois étapes principales :
 
 Au cours de ce projet, nous avons adopté des **approches individuelles**, où chaque maladie complexe est analysée séparément pour déterminer des associations avec des maladies simples, notamment par l'ajustement des seuils. Une alternative consiste à envisager une **approche ensembliste**, où toutes les maladies complexes et simples seraient considérées simultanément pour établir un système global d'associations. Une méthode clé pour cela est le **transport optimal**, qui peut offrir plusieurs avantages.
 
-# 2.Le jeu de données
+# Le jeu de données
 
-## 2.1. Structure des données
+## Structure des données
 
 ### Points clés :
 
@@ -85,7 +88,7 @@ load("Data/df_lignes_identiques.RData")
 head(df_lignes_identiques)
 ```
 
-## 2.2. Hiérarchie phénotypique
+## Hiérarchie phénotypique
 
 ```{r message=FALSE, warning=FALSE}
 
@@ -132,13 +135,13 @@ colnames(df) <- phenotype_names[formatted_colnames]
 df[1:10,1:10]
 ```
 
-# 3.Calcul de la matrice de distance et/ou de similarité
+# Calcul de la matrice de distance et/ou de similarité
 
 Nous avons identifié plusieurs méthodes pour obtenir une matrice de distance ou de similarité entre les maladies. Ces méthodes peuvent inclure un **filtre de transport optimal**, qui reste à explorer.
 
 ![](images/schema_etape1)
 
-## 3.1. Calculs classiques
+## Calculs classiques
 
 ### Modes de distance :
 
@@ -177,13 +180,13 @@ Ces méthodes de calcul classiques présentent des limitations importantes dans 
 
 Ces biais mettent en évidence une lacune majeure des métriques binaires classiques comme Jaccard, Sorensen ou Ochiai dans notre contexte. Sans prise en compte de la structure hiérarchique des phénotypes, ces méthodes risquent d’interpréter à tort des absences ou des similitudes, conduisant à des regroupements ou des distinctions non fiables entre maladies.
 
-## 3.2. Analyses factorielles
+## Analyses factorielles
 
 L'objectif des analyses factorielles est de projeter les maladies complexes (MC) dans un espace défini par les maladies simples (MS). Pour ce faire, les maladies complexes sont traitées comme des individus supplémentaires, tandis que l'espace de représentation est construit exclusivement à partir des maladies simples.
 
 Bien que le tableau combinant MS et MC ne contienne pas de colonnes entièrement composées de zéros, certains phénotypes peuvent être exclusifs aux MS ou aux MC. Cette spécificité complique les analyses factorielles, en particulier lorsqu'il s'agit de distinguer les **individus actifs** des **individus supplémentaires**.
 
-### 3.2.1. Analyse des Correspondances Multiples (ACM)
+### Analyse des Correspondances Multiples (ACM)
 
 Initialement, deux approches étaient envisagées :
 
@@ -228,7 +231,7 @@ ggplot(dist_long, aes(x = MS, y = MC, fill = Distance)) +
 
 ```
 
-### 3.2.2. Analyse Factorielle Multiple (AFM)
+### Analyse Factorielle Multiple (AFM)
 
 L'AFM était envisagée comme une méthode pour intégrer la **hiérarchie des phénotypes** dans l'analyse. Cette méthode permettrait de regrouper les variables en blocs distincts, reflétant les niveaux hiérarchiques des phénotypes.
 
@@ -244,7 +247,7 @@ L'idée a été abandonnée en raison de plusieurs problèmes inhérents à la h
 
 Ces limitations rendent l'AFM moins appropriée pour notre problématique actuelle.
 
-## 3.3.Embedding
+## Embedding
 
 Pour contourner les limitations liées à la hiérarchie des phénotypes, nous explorons l’utilisation de l’**embedding**, une technique permettant de représenter des mots, des phrases ou des entités sous forme de vecteurs dans un espace numérique. Cette méthode offre une alternative puissante et flexible aux approches classiques de calcul de distances, en particulier dans notre contexte.
 
@@ -276,7 +279,7 @@ Pour générer des embeddings adaptés aux maladies complexes, nous utilisons un
 
 Ce prompt met en avant les variations intra-maladie tout en conservant une structure commune pour faciliter la vectorisation. Les vecteurs obtenus permettent ensuite de calculer des matrices de distance ou de similarité entre maladies.
 
-## 3.4.Transport Optimal (TO)
+## Transport Optimal (TO)
 
 Le transport optimal est une méthode **holistique et exhaustive** permettant d'établir des correspondances entre les maladies mendéliennes et complexes. Son principal objectif est de **minimiser une distance globale** entre tous les gènes possibles, tout en considérant un ensemble complet de données.
 
@@ -305,29 +308,29 @@ Bien que le transport optimal soit présenté comme une méthode globale et exha
 
 Pour le moment, le transport optimal **n'a pas encore été appliqué** dans nos méthodes. Une analyse comparative est en cours pour évaluer les résultats existants obtenus sur le projet avec et sans utilisation du transport optimal. Cette comparaison permettra de déterminer les différences entre cette méthode et nos résultats actuels.
 
-# 4.Obtention d'une matrice d'assignation
+# Obtention d'une matrice d'assignation
 
 Une des étapes importante du workflow consiste à passer de la matrice de distance à la matrice d'assignation. Pour cela il faut identifier un seuil à partir duquel on associe une maladie simple à une complexe. Plusieurs approches ont été testées pour déterminer un seuil pertinent. 
 
-## 4.1.Seuil global
+## Seuil global
 
 Ce seuil est fixe et s'applique à l'ensemble des maladies, en déterminant une distance maximale acceptable entre une maladie complexe et un gène.
 
-## 4.2.Seuil individuel
+## Seuil individuel
 
 Ce seuil est défini en fonction des quantiles de la distribution des distances pour chaque maladie, permettant ainsi une certaine individualisation du seuil en fonction de chaque cas.
 
 Cependant, l'approche du seuil individuel présente des limitations. En effet, cela conduit souvent à de nombreuses assignations, même pour des distances très grandes (par exemple, supérieures à 0.9), notamment pour les maladies complexes. En outre, la matrice de distance de base influence fortement le résultat de l'assignation des gènes.
 
-## 4.3.Seuil critique
+## Seuil critique
 
 Afin de rendre la sélection du seuil plus robuste, nous avons trouvé intéressant d’introduire un **seuil critique**, similaire à une **p-value critique**. Il a donc fallu que nous l’estimions. Ceci est possible de deux façons. 
 
-### 4.3.1.Estimation de la P-value empirique par proportion
+### Estimation de la P-value empirique par proportion
 
 Cela consiste à approximativement calculer la p-value à partir de la matrice des distances en observant la proportion de distances inférieures à la distance considérée.
 
-### 4.3.2.Estimation de la P-value empirique par permutations
+### Estimation de la P-value empirique par permutations
 
 Cette méthode repose sur la permutation d’un maladie complexe dans le jeu de données initiale (en modifiant aléatoirement les associations entre maladies complexes et simples en changeant son phénotype), puis en calculant de nouveau les distances entre la maladie complexe permutée et les autres maladies.
 
@@ -359,4 +362,4 @@ Les permutations consistent à modifier aléatoirement les associations entre un
 
     -   Les proportions initiales de phénotypes activés (0 et 1) dans les données réelles ne sont plus respectées après permutation, car les activations propagées à travers la hiérarchie modifient ces proportions.
 
-# 5.Grands Modèles de Language (LLM)
+# Grands Modèles de Language (LLM)
