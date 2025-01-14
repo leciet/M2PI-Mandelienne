@@ -30,3 +30,6 @@ df_tidy <- df %>%
 df_tidy <- unique(df_tidy) # retirer les lignes identiques
 
 save(df_tidy,file='Data/asso_gene-maladie.RData')
+
+# apply(df_tidy,1,FUN = function(row){
+  # prompt <- sprintf("petit prompt",row[2],row[1],row[2],row[1])})
