@@ -1,0 +1,17 @@
+Profils_Base_OMIM.csv
+coord_fact_acm.RData
+coord_fact_embedding.RData
+coord_fact_mds_jaccard.RData
+coord_fact_mds_ochiai.RData
+coord_fact_mds_ot_jaccard.RData
+coord_fact_mds_sorensen.RData
+data_pour_afm.RData
+dist_or_jaccard_mx.RData
+dist_or_ochiai_mx.RData
+dist_or_sorensen_mx.RData
+dist_ot_jaccard_mx.RData
+embeddings_Pheno_SBERT_sans_hierarchie.csv
+phenotype_maladie_s_c.RData
+res.acm.RData
+res.mfa.RData
+tableau_permutation.RData
