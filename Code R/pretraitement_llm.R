@@ -33,3 +33,18 @@ save(df_tidy,file='Data/asso_gene-maladie.RData')
 
 # apply(df_tidy,1,FUN = function(row){
   # prompt <- sprintf("petit prompt",row[2],row[1],row[2],row[1])})
+
+
+
+
+data(iris)
+
+
+result <- apply(iris[,-5],1,FUN = function(row){
+  m <- mean(c(row[1],row[2]))
+  s <- sd(c(row[1],row[2]))
+  return(c('mean'=m,'sd'=s))
+})
+
+
+result <- t(result)
