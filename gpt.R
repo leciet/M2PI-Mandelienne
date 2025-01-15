@@ -94,8 +94,8 @@ collect_scores <- function(prompt, gene, disease, n_scores = 5, max_attempts = 5
     attempts <- attempts + 1
     tryCatch({
       response <- generate("llama3", prompt = prompt, output = "text")
-      score <- as.numeric(str_extract(response, "\\d+"))
-      
+      score <- as.numeric(sub(".*SCORE:\\s*(\\d+).*", "\\1", response))
+
       if (!is.na(score)) {
         scores <- c(scores, score)
       }
@@ -155,11 +155,12 @@ REASON: [enter one short sentence]",
 }
 
 # Application sur le jeu de test
-test <- df_tidy[sample(nrow(df_tidy), 3), ]
-results <- do.call(rbind, apply(test, 1, function(row) {
+test <- df_tidy[sample(nrow(df_tidy), 10), ]
+system.time(results <- do.call(rbind, apply(test, 1, function(row) {
   analyze_gene_disease(
     gene = row["gene"], 
     disease = row["disease"]
   )
 }))
+)
 
