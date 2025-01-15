@@ -35,14 +35,12 @@ dist_or_sorensen <- as.data.frame(as.matrix(dist_or_sorensen))
 dist_or_sorensen <- dist_or_sorensen[6126:7089,1:6125]
 dist_or_sorensen_mx <- as.matrix(dist_or_sorensen)
 
-
 # Calculate Ochiai distance ----
 
 dist_or_ochiai <- dist.binary(phenotype_maladie_s_c, method = 7)
 dist_or_ochiai <- as.data.frame(as.matrix(dist_or_ochiai))
 dist_or_ochiai <- dist_or_ochiai[6126:7089,1:6125]
 dist_or_ochiai_mx <- as.matrix(dist_or_ochiai)
-
 
 # Save distance matrices ----
 

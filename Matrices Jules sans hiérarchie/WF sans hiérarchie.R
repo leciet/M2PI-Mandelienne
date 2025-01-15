@@ -28,6 +28,7 @@
 
 rm(list=ls())
 load("phenotype_maladie_s_c.RData")
+phenotype_maladie_s_c_binary <- as.matrix(phenotype_maladie_s_c == 1)
 
 # Library ----
 library(tidyverse)
@@ -41,6 +42,7 @@ library(smacof)
 
 ######################################################### 1) Matrices de distance
 # Calculate Jaccard distance ----
+
 
 index_ASCVD <- which(rownames(phenotype_maladie_s_c) == "ASCVD")
 rownames(phenotype_maladie_s_c[6103,])
@@ -205,7 +207,7 @@ save(coord_fact_mds_ochiai, "coord_fact_mds_ochiai.RData")
 save(coord_fact_mds_jaccard, "coord_fact_mds_jaccard.RData")
 save(coord_fact_mds_ot_jaccard, "coord_fact_mds_ot_jaccard.RData")
 
-rm(coord_fact_mds)
+rm(list=ls())
 load("coord_fact_mds_sorensen.RData")
 coord_fact_mds_sorensen <- coord_fact_mds
 load("coord_fact_mds_ochiai.RData")
@@ -215,6 +217,8 @@ coord_fact_mds_jaccard <- coord_fact_mds
 load("coord_fact_mds_ot_jaccard.RData")
 coord_fact_mds_ot_jaccard <- coord_fact_mds
 rm(coord_fact_mds)
+
+all.equal(coord_fact_mds_sorensen, coord_fact_mds_ochiai)
 
 # AFM sur maladies complexes ----
 
@@ -244,9 +248,79 @@ res.mfa <- MFA(data_pour_afm,
                name.group = c("ACM", "Sorensen", "Ochiai", "Jaccard", "Jaccard_OT","Embedding"))
 save(res.mfa, file = "res.mfa.RData")
 
+# Visualisation des densités de distance avec ou sans permutation ----
+phenotype_maladie_s_c2 <- as.matrix(phenotype_maladie_s_c)
+row <- phenotype_maladie_s_c2[6103, ]
+other_rows <- matrix(as.numeric(phenotype_maladie_s_c2[-6103, ]), 
+                     nrow = nrow(phenotype_maladie_s_c2) - 1,
+                     byrow = FALSE)
+calc_distances <- function(matrix1, vector1) {
+  intersections <- matrix1 %*% vector1  # Calcule tous les points d'intersection d'un coup
+  sums1 <- rowSums(matrix1)  # Somme des lignes
+  sum2 <- sum(vector1)  # Somme du vecteur
+  1 - (2 * intersections) / (sums1 + sum2)
+}
+distance_originale <- calc_distances(other_rows, row)
+View(distance_originale)
+
+permuted_row1 <- sample(row, length(row), replace = FALSE)
+distance_permut_1 <- calc_distances(other_rows, permuted_row1)
+
+permuted_row2 <- sample(row, length(row), replace = FALSE)
+distance_permut_2 <- calc_distances(other_rows, permuted_row2)
+
+permuted_row3 <- sample(row, length(row), replace = FALSE)
+distance_permut_3 <- calc_distances(other_rows, permuted_row3)
+
+permuted_row4 <- sample(row, length(row), replace = FALSE)
+distance_permut_4 <- calc_distances(other_rows, permuted_row4)
+
+permuted_row5 <- sample(row, length(row), replace = FALSE)
+distance_permut_5 <- calc_distances(other_rows, permuted_row5)
+
+library(ggplot2)
+
+# Regrouper les distances dans un data.frame
+distance_data <- data.frame(
+  Distance = c(distance_originale, 
+               distance_permut_1, 
+               distance_permut_2, 
+               distance_permut_3, 
+               distance_permut_4, 
+               distance_permut_5),
+  Type = factor(c(
+    rep("Originale", length(distance_originale)),
+    rep("Permutation 1", length(distance_permut_1)),
+    rep("Permutation 2", length(distance_permut_2)),
+    rep("Permutation 3", length(distance_permut_3)),
+    rep("Permutation 4", length(distance_permut_4)),
+    rep("Permutation 5", length(distance_permut_5))
+  ))
+)
+
+# Visualisation avec ggplot2
+ggplot(distance_data, aes(x = Distance, color = Type, fill = Type)) +
+  geom_density(alpha = 0.3, size = 1) +  # Courbes de densité avec transparence
+  scale_color_manual(values = c("Originale" = "red", 
+                                "Permutation 1" = "black", 
+                                "Permutation 2" = "blue", 
+                                "Permutation 3" = "green", 
+                                "Permutation 4" = "purple", 
+                                "Permutation 5" = "orange")) +
+  scale_fill_manual(values = c("Originale" = "red", 
+                               "Permutation 1" = "black", 
+                               "Permutation 2" = "blue", 
+                               "Permutation 3" = "green", 
+                               "Permutation 4" = "purple", 
+                               "Permutation 5" = "orange")) +
+  labs(title = "Densité des distances (Originale vs 5 permutations)",
+       x = "Distance (Sørensen-Dice)",
+       y = "Densité") +
+  theme_minimal() +
+  theme(legend.title = element_blank())  # Retire le titre de la légende
+
 # Permutations ----
-# Optimized permutation analysis function
-# Optimized Sorensen distance function using vectorization
+
 sorensen_distance <- function(x, y) {
   intersection <- sum(x & y)
   union <- sum(x) + sum(y)
@@ -282,6 +356,17 @@ permut_all <- function(dta, n_perm, line_idx) {
   return(c(rowname = original_rowname, threshold = min(pmin)))
 }
 
+# dta3 <- permut_all(phenotype_maladie_s_c, n_perm=5, line_idx=6103)
+# dta3
+# dta <- permut_all(phenotype_maladie_s_c, n_perm=1000, line_idx=6104)
+# dta
+# dta2 <- permut_all(phenotype_maladie_s_c, n_perm=5, line_idx=6104)
+# dta2
+# dt4 <- permut_all(phenotype_maladie_s_c, n_perm=2, line_idx=6105)
+# dt4
+# compte_par_ligne <- apply(phenotype_maladie_s_c, 1, function(ligne) sum(ligne != 1))
+# print(compte_par_ligne)
+
 # Optimized multiple rows processing
 process_multiple_rows <- function(dta, n_perm, start_idx, end_idx) {
   n_rows <- end_idx - start_idx + 1
@@ -296,10 +381,24 @@ process_multiple_rows <- function(dta, n_perm, start_idx, end_idx) {
   return(results_df)
 }
 
-tableau_permutation <- process_multiple_rows(phenotype_maladie_s_c, n_perm = 1, start_idx = 6103, end_idx = 7064)
-save(tableau_permutation, file = "tableau_permutation.RData")
+tableau_permutation <- process_multiple_rows(phenotype_maladie_s_c, n_perm = 5, start_idx = 6103, end_idx = 7064)
+tableau_permutation$threshold <- as.numeric(tableau_permutation$threshold)
+head(tableau_permutation)
+save(tableau_permutation, file="tableau_permutation.RData")
 
 load ("tableau_permutation.RData")
+
+# head(dist_or_sorensen[1:10, 1:10])
+# 
+# dist_or_sorensen <- as.data.frame(dist_or_sorensen_mx)
+# compte_par_ligne <- apply(dist_or_sorensen, 1, function(ligne) sum(ligne != 1))
+# print(compte_par_ligne)
+# 
+# all(rownames(dist_or_sorensen_mx) == tableau_permutation$rowname)
+# dim(dist_or_sorensen_mx)
+# dim(tableau_permutation)
+
+
 # ensuite une fois que j'ai comparé mes méthodes entre elle j'obtiens une matrice d'assignation 
 # avec les permutations qui font que j'associe un grand nombre de maladies simples à chaque 
 # maladie complexe
@@ -316,7 +415,6 @@ load ("tableau_permutation.RData")
 
 # donc potentiellement on a des maladies complexes qui sont associées entre elles et qui ne sont
 # pas forcément liées dans l'acm
-
 
 # Matrice d'assignation sorensen ----
 
@@ -341,13 +439,20 @@ create_association_matrix <- function(distance_matrix, threshold_table) {
   return(association_matrix)
 }
 
-matrice_assignation_sorensen_permutation <- create_association_matrix(dist_or_sorensen_mx, tableau_permutation)
+matrice_assignation_sorensen_permutation <- create_association_matrix(dist_or_sorensen_mx, 
+                                                                      tableau_permutation)
 rowSums(matrice_assignation_sorensen_permutation)
 save(matrice_assignation_sorensen_permutation, file="matrice_assignation_sorensen.RData")
 
+matrice_filtrée <- matrice_assignation_sorensen_permutation[rowSums(matrice_assignation_sorensen_permutation) != 0, ]
+View(matrice_filtrée)
+
 load("matrice_assignation_sorensen_permutation.RData")
-rowSums(matrice_assignation_sorensen_permutation)
+rowSums(matrice_filtrée)
 colSums(matrice_assignation_sorensen_permutation)
+
+rowSums(phenotype_maladie_s_c)
+rowSums(phenotype_maladie_s_c[6103:7064,])
 
 # Clustering ----
 
@@ -356,33 +461,26 @@ row_sorensen <- as.data.frame(row_sorensen)
 col_sorensen = coord_fact_mds_sorensen$conf.col
 col_sorensen <- as.data.frame(col_sorensen)
 data_classif_sorensen <- rbind(row_sorensen, col_sorensen)
-save(data_classif_sorensen, file="data_classif_sorensen.RData")
 
 row_ochiai = coord_fact_mds_ochiai$conf.row
 row_ochiai <- as.data.frame(row_ochiai)
 col_ochiai = coord_fact_mds_ochiai$conf.col
 col_ochiai  <- as.data.frame(col_ochiai )
 data_classif_ochiai <- rbind(row_ochiai, col_ochiai)
-save(data_classif_ochiai, file="data_classif_ochiai.RData")
 
 row_jaccard = coord_fact_mds_jaccard$conf.row
 row_jaccard <- as.data.frame(row_jaccard)
 col_jaccard = coord_fact_mds_jaccard$conf.col
 col_jaccard <- as.data.frame(col_jaccard)
-data_classif_jaccard <- rbind(row_jaccard, col_jaccard)
-save(data_classif_jaccard, file="data_classif_jaccard.RData")
 
 row_ot_jaccard = coord_fact_mds_ot_jaccard$conf.row
 row_ot_jaccard <- as.data.frame(row_ot_jaccard)
 col_ot_jaccard = coord_fact_mds_ot_jaccard$conf.col
 col_ot_jaccard <- as.data.frame(col_ot_jaccard)
 data_classif_ot_jaccard <- rbind(row_ot_jaccard, col_ot_jaccard)
-save(data_classif_ot_jaccard, file="data_classif_ot_jaccard.RData")
 
 data_classif_embedding <- as.data.frame(coord_fact_embedding)
 data_classif_acm <- as.data.frame(coord_fact_acm)
-save(data_classif_embedding, file="data_classif_embedding.RData")
-save(data_classif_acm, file="data_classif_acm.RData")
 
 names(data_classif_sorensen) <- paste0("D", 1:ncol(data_classif_sorensen))
 names(data_classif_ochiai) <- paste0("D", 1:ncol(data_classif_ochiai))
@@ -390,6 +488,13 @@ names(data_classif_jaccard) <- paste0("D", 1:ncol(data_classif_jaccard))
 names(data_classif_ot_jaccard) <- paste0("D", 1:ncol(data_classif_ot_jaccard))
 names(data_classif_embedding) <- paste0("D", 1:ncol(data_classif_embedding))
 names(data_classif_acm) <- paste0("D", 1:ncol(data_classif_acm))
+
+save(data_classif_sorensen, file="data_classif_sorensen.RData")
+save(data_classif_sorensen, file="data_classif_sorensen.RData")
+save(data_classif_jaccard, file="data_classif_jaccard.RData")
+save(data_classif_ot_jaccard, file="data_classif_ot_jaccard.RData")
+save(data_classif_embedding, file="data_classif_embedding.RData")
+save(data_classif_acm, file="data_classif_acm.RData")
 
 load("data_classif_sorensen.RData")
 load("data_classif_ochiai.RData")
@@ -405,17 +510,17 @@ library(factoextra)
 silhouette_sorensen  <- fviz_nbclust(data_classif_sorensen, 
                                      kmeans, 
                                      method = "silhouette", 
-                                     k.max = 400)
+                                     k.max = 800)
 silhouette_sorensen
+save(silhouette_sorensen, file="silhouette_sorensen.RData")
 hc_sorensen <- HCPC(data_classif_sorensen,
                     nb.clust = -1)
 save(hc_sorensen, file="hc_sorensen.RData")
 
-
 silhouette_ochiai  <- fviz_nbclust(data_classif_ochiai, 
                                    kmeans, 
                                    method = "silhouette", 
-                                   k.max = 400)
+                                   k.max = 800)
 silhouette_ochiai
 hc_ochiai <- HCPC(data_classif_ochiai,
                   nb.clust = -1)
@@ -425,7 +530,7 @@ save(hc_ochiai, file="hc_ochiai.RData")
 silhouette_jaccard <- fviz_nbclust(data_classif_jaccard, 
                                    kmeans, 
                                    method = "silhouette", 
-                                   k.max = 400)
+                                   k.max = 800)
 silhouette_jaccard
 hc_jaccard <- HCPC(data_classif_jaccard,
                    nb.clust = -1)
@@ -434,7 +539,7 @@ save(hc_jaccard, file="hc_jaccard.RData")
 silhouette_ot_jaccard<- fviz_nbclust(data_classif_ot_jaccard, 
                                      kmeans, 
                                      method = "silhouette", 
-                                     k.max = 400)
+                                     k.max = 800)
 silhouette_ot_jaccard
 hc_ot_jaccard <- HCPC(data_classif_ot_jaccard,
                       nb.clust = -1)
@@ -443,7 +548,7 @@ save(hc_ot_jaccard, file="hc_ot_jaccard.RData")
 silhouette_embedding- fviz_nbclust(data_classif_embedding, 
                                    kmeans, 
                                    method = "silhouette", 
-                                   k.max = 400)
+                                   k.max = 800)
 silhouette_embedding
 hc_embedding <- HCPC(data_classif_embedding,
                      nb.clust = -1)
@@ -452,7 +557,7 @@ save(hc_embedding, file="hc_embedding.RData")
 silhouette_acm <- fviz_nbclust(data_classif_acm, 
                                kmeans, 
                                method = "silhouette", 
-                               k.max = 400)
+                               k.max = 800)
 silhouette_acm
 hc_acm <- HCPC(data_classif_acm,
                nb.clust = -1)
