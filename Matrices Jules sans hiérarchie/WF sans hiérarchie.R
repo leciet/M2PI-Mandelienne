@@ -44,25 +44,25 @@ library(proxy)
 ######################################################### 1) Matrices de distance
 # Autres distances ----
 
-dist_or_tanimoto <- dist.binary(phenotype_maladie_s_c, method = 3) 
-dist_or_tanimoto <- as.data.frame(as.matrix(dist_or_tanimoto))
-dist_or_tanimoto <- dist_or_tanimoto[6103:7064, 1:6102]
-dist_or_tanimoto_mx <- as.matrix(dist_or_tanimoto)
+dist_or_sokal_sneath <- dist.binary(phenotype_maladie_s_c, method = 3) 
+dist_or_sokal_sneath <- as.data.frame(as.matrix(dist_or_sokal_sneath))
+dist_or_sokal_sneath <- dist_or_sokal_sneath[6103:7064, 1:6102]
+dist_or_sokal_sneath_mx <- as.matrix(dist_or_sokal_sneath)
 
-dist_or_hamming <- dist.binary(phenotype_maladie_s_c, method = 2)
-dist_or_hamming <- as.data.frame(as.matrix(dist_or_hamming))
-dist_or_hamming <- dist_or_hamming[6103:7064, 1:6102]
-dist_or_hamming_mx <- as.matrix(dist_or_hamming)
+dist_or_sokal_michener <- dist.binary(phenotype_maladie_s_c, method = 2)
+dist_or_sokal_michener <- as.data.frame(as.matrix(dist_or_sokal_michener))
+dist_or_sokal_michener <- dist_or_sokal_michener[6103:7064, 1:6102]
+dist_or_sokal_michener_mx <- as.matrix(dist_or_sokal_michener)
 
-dist_or_kulczynski  <- dist.binary(phenotype_maladie_s_c, method = 4)
-dist_or_kulczynski <- as.data.frame(as.matrix(dist_or_kulczynski))
-dist_or_kulczynski <- dist_or_kulczynski[6103:7064, 1:6102]
-dist_or_kulczynski_mx <- as.matrix(dist_or_kulczynski)
+dist_or_rogers_tanimoto  <- dist.binary(phenotype_maladie_s_c, method = 4)
+dist_or_rogers_tanimoto <- as.data.frame(as.matrix(dist_or_rogers_tanimoto))
+dist_or_rogers_tanimoto <- dist_or_rogers_tanimoto[6103:7064, 1:6102]
+dist_or_rogers_tanimoto_mx <- as.matrix(dist_or_rogers_tanimoto)
 
-dist_or_dice <- dist.binary(phenotype_maladie_s_c, method = 6) 
-dist_or_dice <- as.data.frame(as.matrix(dist_or_dice))
-dist_or_dice <- dist_or_dice[6103:7064, 1:6102]
-dist_or_dice_mx <- as.matrix(dist_or_dice)
+dist_or_hamann <- dist.binary(phenotype_maladie_s_c, method = 6) 
+dist_or_hamann <- as.data.frame(as.matrix(dist_or_hamann))
+dist_or_hamann <- dist_or_hamann[6103:7064, 1:6102]
+dist_or_hamann_mx <- as.matrix(dist_or_hamann)
 
 dist_cosine <- dist(phenotype_maladie_s_c, method = "cosine")
 dist_cosine <- as.data.frame(as.matrix(dist_cosine))
@@ -102,10 +102,10 @@ save(dist_or_jaccard_mx, file="dist_or_jaccard_mx.RData")
 save(dist_or_sorensen_mx, file="dist_or_sorensen_mx.RData")
 save(dist_or_ochiai_mx, file="dist_or_ochiai_mx.RData")
 
-save(dist_or_tanimoto_mx, file="dist_or_tanimoto_mx.RData")
-save(dist_or_hamming_mx, file="dist_or_hamming_mx.RData")
-save(dist_or_kulczynski_mx, file="dist_or_kulczynski_mx.RData")
-save(dist_or_dice_mx, file="dist_or_dice_mx.RData")
+save(dist_or_sokal_sneath_mx, file="dist_or_sokal_sneath_mx.RData")
+save(dist_or_sokal_michener_mx, file="dist_or_sokal_michener_mx.RData")
+save(dist_or_rogers_tanimoto_mx, file="dist_or_rogers_tanimoto_mx.RData")
+save(dist_or_hamann_mx, file="dist_or_hamann_mx.RData")
 save(dist_cosine_mx, file="dist_cosine_mx.RData")
 
 # Load distance matrices ----
@@ -214,9 +214,9 @@ Phe_OMIM_communes <- Phe_OMIM[, colonnes_communes, drop = FALSE]
 dta_acm <- data.frame(lapply(phenotype_maladie_s_c, as.factor))
 res.acm<- MCA(dta_acm, ind.sup = c(6103:7064), graph = TRUE, ncp=384)
 save(res.acm, file = "res.acm.RData")
-col_acm <- res.acm$ind$coord
+col_acm <- res.acm$ind$coord 
 row_acm <- res.acm$ind.sup$coord
-coord_fact_acm <- rbind(col_acm, row_acm)
+coord_fact_acm <- rbind(row_acm, col_acm)
 coord_fact_acm <- as.data.frame(coord_fact_acm)
 save(coord_fact_acm, file = "coord_fact_acm.RData")
 load("res.acm.RData")
@@ -255,7 +255,20 @@ load("coord_fact_mds_jaccard.RData")
 coord_fact_mds_jaccard <- coord_fact_mds
 load("coord_fact_mds_ot_jaccard.RData")
 coord_fact_mds_ot_jaccard <- coord_fact_mds
-rm(coord_fact_mds)
+rm(coord_fact_mds_dice)
+
+load("coord_fact_mds_hamann.RData")
+coord_fact_mds_hamann <- coord_fact_mds_dice
+rm(coord_fact_mds_dice)
+load("coord_fact_mds_rogers_tanimoto.RData")
+coord_fact_mds_rogers_tanimoto <- coord_fact_mds_kulczynski
+rm(coord_fact_mds_kulczynski)
+load("coord_fact_mds_sokal_michener.RData")
+coord_fact_mds_sokal_michener <- coord_fact_mds_hamming
+rm(coord_fact_mds_hamming)
+load("coord_fact_mds_sokal_sneath.RData")
+coord_fact_mds_sokal_sneath <- coord_fact_mds_tanimoto
+rm(coord_fact_mds_tanimoto)
 
 all.equal(coord_fact_mds_sorensen, coord_fact_mds_ochiai)
 
@@ -353,7 +366,7 @@ ggplot(distance_data, aes(x = Distance, color = Type, fill = Type)) +
                                "Permutation 4" = "purple", 
                                "Permutation 5" = "orange")) +
   labs(title = "Densité des distances (Originale vs 5 permutations)",
-       x = "Distance (Sørensen-Dice)",
+       x = "Distance (Sørensen-hamann)",
        y = "Densité") +
   theme_minimal() +
   theme(legend.title = element_blank())  # Retire le titre de la légende
@@ -517,8 +530,15 @@ row_ot_jaccard <- as.data.frame(row_ot_jaccard)
 col_ot_jaccard = coord_fact_mds_ot_jaccard$conf.col
 col_ot_jaccard <- as.data.frame(col_ot_jaccard)
 data_classif_ot_jaccard <- rbind(row_ot_jaccard, col_ot_jaccard)
+# maladies complexes en premier puis maladies simples en second
 
 data_classif_embedding <- as.data.frame(coord_fact_embedding)
+data_classif_embedding <- rbind(
+  data_classif_embedding[6103:7064, ],  # Lignes 6103 à 7064 en premier
+  data_classif_embedding[1:6102, ]      # Lignes 1 à 6102 ensuite
+)
+rownames(data_classif_embedding) <- 1:nrow(data_classif_embedding)
+
 data_classif_acm <- as.data.frame(coord_fact_acm)
 
 names(data_classif_sorensen) <- paste0("D", 1:ncol(data_classif_sorensen))
@@ -542,7 +562,7 @@ load("data_classif_ot_jaccard.RData")
 load("data_classif_embedding.RData")
 load("data_classif_acm.RData")
 
-mc_indices <- 6103:7064
+mc_inhamanns <- 6103:7064
 
 library(cluster)
 library(factoextra)
