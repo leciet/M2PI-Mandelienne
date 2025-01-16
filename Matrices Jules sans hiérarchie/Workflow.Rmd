@@ -1,8 +1,9 @@
 ---
 title: "Workflow"
-author: "Leslie CIETERS
-Nemo DIDIER 
-Sara LARCHER"
+author: 
+  - Leslie CIETERS^[leslie.cieters@agrocampus-ouest.fr]
+  - Nemo DIDIER^[nemo.didier@agrocampus-ouest.fr]
+  - Sara LARCHER^[sara.larcher@agrocampus-ouest.fr]
 date: "2025-01-15"
 output: 
   html_document:
@@ -10,7 +11,6 @@ output:
     toc_float: true
     number_sections: true
     theme: flatly
-    fig_caption: true
 ---
 
 ```{r setup, include=FALSE}
@@ -23,7 +23,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ------------------------------------------------------------------------
 
 ::: {#introduction style="text-align: justify;"}
-Les maladies simples sont **monogéniques**, localisées sur les exons, et bien étudiées. Elles déclenchent des phénotypes précis, permettant d'identifier facilement le lien entre un phénotype et le gène impliqué. En revanche, les maladies complexes, **multigéniques**, peuvent impacter d'autres régions moins bien connues que les exons. Il est donc difficile, à partir des phénotypes, de déterminer les gènes impliqués.
+Les maladies simples sont **monogéniques**, issues de mutations localisées sur les exons, et bien étudiées. Elles déclenchent des phénotypes précis, permettant d'identifier facilement le lien entre un phénotype et le gène impliqué. En revanche, les maladies complexes, **multigéniques**, peuvent impacter d'autres régions moins bien connues que les exons et plusieurs régions à la fois. Il est donc difficile, à partir des phénotypes, de déterminer les gènes impliqués.
 
 L'**objectif** de ce document est de proposer, pour chaque maladie complexe, une liste des gènes impliqués. Pour cela, nous exploitons les maladies simples proches d'une maladie complexe donnée pour identifier des phénotypes communs, permettant de définir une liste de gènes potentiellement responsables de la maladie complexe afin d'orienter la recherche. **Les associations gène-maladie ne sont pas interprétées à ce stade**.
 
@@ -35,7 +35,7 @@ L'**objectif** de ce document est de proposer, pour chaque maladie complexe, une
 ::: {style="test-align: justify"}
 Le projet s’articule autour de deux étapes principales :
 
-1.  **Calcul d’une matrice de distance ou de coordonnées dans un nombre de dimensions finis** : Il s'agit de projeter des maladies simples et complexes dans un espace commun.
+1.  **Calcul d’une matrice de distance et des coordonnées dans un nombre de dimensions finis** : Il s'agit de projeter des maladies simples et complexes dans un espace commun.
 
 2.  **Définition d’un seuil d’assignation des gènes** : On utilise un seuil global ou spécifique à chaque maladie complexe, au travers de plusieurs méthodes.
 
@@ -58,6 +58,7 @@ require(reshape)
 require(DataExplorer)
 require(smacof)
 require(Matrix)
+require(proxy)
 require(pheatmap)
 if (!require("ontologyIndex")) install.packages("ontologyIndex", repos = "http://cran.us.r-project.org")
 library(ontologyIndex)
@@ -221,3 +222,109 @@ ggplot(top_phenotypes, aes(x = reorder(phenotype, frequency), y = frequency)) +
        x = "Phénotype",
        y = "Nombre de maladies associées")
 ```
+
+# Calcul de matrices de distances {.tabset}
+
+::: {style="test-align: justify"}
+Ici on cherche à caluler des distances binaires, c'est-à-dire des distances sur une matrice binaire avec **1=Présence** et **0=Absence**. <br>
+On note : 
+:::
+- $n_{11} = a$ 
+- $n_{10} = b$
+- $n_{01} = c$
+- $n_{00} = d$
+
+
+## Jaccard
+
+$$d_{Jaccard}=\sqrt{1-\frac{a}{a+b+c}}$$
+
+```{r eval=FALSE}
+index_ASCVD <- which(rownames(phenotype_maladie_s_c) == "ASCVD")
+rownames(phenotype_maladie_s_c[6103,])
+rownames(phenotype_maladie_s_c[6102,])
+
+dist_or_jaccard <- dist.binary(phenotype_maladie_s_c, method = 1)
+dist_or_jaccard <- as.data.frame(as.matrix(dist_or_jaccard))
+dist_or_jaccard <- dist_or_jaccard[6103:7064, 1:6102]  # Extraction du sous-ensemble MC-MS
+dist_or_jaccard_mx <- as.matrix(dist_or_jaccard)
+```
+
+## SMC (Sokal et Michener)
+
+$$d_{SMC}=\sqrt{1-\frac{a+d}{a+b+c+d}}$$
+
+```{r eval=FALSE}
+dist_or_smc <- dist.binary(phenotype_maladie_s_c, method = 2)
+dist_or_smc <- as.data.frame(as.matrix(dist_or_smc))
+dist_or_smc <- dist_or_smc[6103:7064, 1:6102]
+dist_or_smc_mx <- as.matrix(dist_or_smc)
+```
+
+## Sokal et sneath
+$$d_{Jaccard}=\sqrt{1-\frac{a}{a+2(b+c)}}$$
+
+```{r eval=FALSE}
+dist_or_tanimoto <- dist.binary(phenotype_maladie_s_c, method = 3) 
+dist_or_tanimoto <- as.data.frame(as.matrix(dist_or_tanimoto))
+dist_or_tanimoto <- dist_or_tanimoto[6103:7064, 1:6102]
+dist_or_tanimoto_mx <- as.matrix(dist_or_tanimoto)
+```
+
+## Kulczynski (Rogers et Tanimoto)
+
+$$d_{Jaccard}=\sqrt{1-\frac{a+d}{a+2(b+c)+d}}$$
+
+```{r eval=FALSE}
+dist_or_kulczynski  <- dist.binary(phenotype_maladie_s_c, method = 4)
+dist_or_kulczynski <- as.data.frame(as.matrix(dist_or_kulczynski))
+dist_or_kulczynski <- dist_or_kulczynski[6103:7064, 1:6102]
+dist_or_kulczynski_mx <- as.matrix(dist_or_kulczynski)
+```
+
+## Sorensen (ou Dice)
+
+$$d_{Jaccard}=\sqrt{1-\frac{2a}{2a+b+c}}$$
+
+```{r eval=FALSE}
+dist_or_sorensen <- dist.binary(phenotype_maladie_s_c, method = 5)
+dist_or_sorensen <- as.data.frame(as.matrix(dist_or_sorensen))
+dist_or_sorensen <- dist_or_sorensen[6103:7064, 1:6102]
+dist_or_sorensen_mx <- as.matrix(dist_or_sorensen)
+```
+
+## Dice (Hamann)
+
+$$d_{Jaccard}=\sqrt{1-\frac{a-(b+c)+d}{a+b+c+d}}$$
+
+```{r eval=FALSE}
+dist_or_dice <- dist.binary(phenotype_maladie_s_c, method = 6) 
+dist_or_dice <- as.data.frame(as.matrix(dist_or_dice))
+dist_or_dice <- dist_or_dice[6103:7064, 1:6102]
+dist_or_dice_mx <- as.matrix(dist_or_dice)
+```
+
+## Ochiai
+
+$$d_{Jaccard}=\sqrt{1-\frac{a}{\sqrt{(a+b)(a+c)}}}$$
+
+```{r eval=FALSE}
+dist_or_ochiai <- dist.binary(phenotype_maladie_s_c, method = 7)
+dist_or_ochiai <- as.data.frame(as.matrix(dist_or_ochiai))
+dist_or_ochiai <- dist_or_ochiai[6103:7064, 1:6102]
+dist_or_ochiai_mx <- as.matrix(dist_or_ochiai)
+```
+
+## Cosine 
+
+$$d_{cos} = 1 - \frac{a}{\sqrt{(a + b)(a + c)}}$$
+
+```{r eval=FALSE}
+dist_cosine <- dist(phenotype_maladie_s_c, method = "cosine")
+dist_cosine <- as.data.frame(as.matrix(dist_cosine))
+dist_cosine <- dist_cosine[6103:7064, 1:6102]
+dist_cosine_mx <- as.matrix(dist_cosine)
+```
+
+
+
