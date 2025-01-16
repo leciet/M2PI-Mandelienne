@@ -1,0 +1,223 @@
+---
+title: "Workflow"
+author: "Leslie CIETERS
+Nemo DIDIER 
+Sara LARCHER"
+date: "2025-01-15"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: flatly
+    fig_caption: true
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+------------------------------------------------------------------------
+
+::: {#introduction style="text-align: justify;"}
+Les maladies simples sont **monogéniques**, localisées sur les exons, et bien étudiées. Elles déclenchent des phénotypes précis, permettant d'identifier facilement le lien entre un phénotype et le gène impliqué. En revanche, les maladies complexes, **multigéniques**, peuvent impacter d'autres régions moins bien connues que les exons. Il est donc difficile, à partir des phénotypes, de déterminer les gènes impliqués.
+
+L'**objectif** de ce document est de proposer, pour chaque maladie complexe, une liste des gènes impliqués. Pour cela, nous exploitons les maladies simples proches d'une maladie complexe donnée pour identifier des phénotypes communs, permettant de définir une liste de gènes potentiellement responsables de la maladie complexe afin d'orienter la recherche. **Les associations gène-maladie ne sont pas interprétées à ce stade**.
+
+*Cette démarche s'inscrit dans une volonté d'aide à la recherche médicale et ne doit pas être utilisée telle quelle.*
+:::
+
+## Démarche
+
+::: {style="test-align: justify"}
+Le projet s’articule autour de deux étapes principales :
+
+1.  **Calcul d’une matrice de distance ou de coordonnées dans un nombre de dimensions finis** : Il s'agit de projeter des maladies simples et complexes dans un espace commun.
+
+2.  **Définition d’un seuil d’assignation des gènes** : On utilise un seuil global ou spécifique à chaque maladie complexe, au travers de plusieurs méthodes.
+
+À chacune des étapes nous cherchons à comparer plusieurs méthodes pour obtenir la plus adaptée à notre contexte.
+:::
+
+## Packages requis
+
+::: {style="text-align: justify"}
+Les packages suivants sont utilisés dans ce workflow
+:::
+
+```{r import_packages, message=FALSE, warning=FALSE}
+
+require(tidyverse)
+require(FactoMineR)
+require(ade4)
+require(vegan)
+require(reshape)
+require(DataExplorer)
+require(smacof)
+require(Matrix)
+require(pheatmap)
+if (!require("ontologyIndex")) install.packages("ontologyIndex", repos = "http://cran.us.r-project.org")
+library(ontologyIndex)
+```
+
+# Préparation des données
+
+------------------------------------------------------------------------
+
+Les données initiales sont isssues de deux bases de données différentes :
+
+-   `OMIM` pour les maladies simples
+
+-   `Phecode` pour les maladies complexes
+
+Il s'agit de tableau de Présence/Absence où chaque ligne représente une maladie et chaque colonne un phénotype
+
+|           | Phénotype 1 | Phénotype 2 |
+|:---------:|:-----------:|:-----------:|
+| Maladie 1 |      0      |      1      |
+| Maladie 2 |      1      |      1      |
+| Maladie 3 |      1      |      0      |
+
+: **Structure des données**
+
+::: {style="text-align:justify"}
+Les phénotypes peuvent différer d'une base à une autre. Afin de comparer maladies simples et complexes, on ne récupère que les phénotypes communs aux deux bases de données. De plus on retire du jeu de données final, toutes les maladies ne présentant pas de variabilité dans les phénotypes observés (c'est-à-dire ne présentant que des absences pour l'ensemble des phénotypes étudiés).
+:::
+
+## Prétraitement
+
+```{r pretraitement_data,eval=FALSE}
+
+# Importation des données 
+Phe_OMIM <- read.csv('Profils_Base_OMIM.csv')
+Phe_Phecode <- read.csv('Profils_Base_Phecodes.csv')
+
+# Passage des noms de maladies en noms de lignes
+rownames(Phe_OMIM) <- Phe_OMIM[,1]
+rownames(Phe_Phecode) <- Phe_Phecode[,1]
+Phe_OMIM <- Phe_OMIM[,-1]
+Phe_Phecode <- Phe_Phecode[,-1]
+
+# Intersection des ensembles de phénotypes des deux bases de données
+colonnes_communes <- intersect(colnames(Phe_OMIM), colnames(Phe_Phecode))
+Phe_OMIM_communes <- Phe_OMIM[, colonnes_communes, drop = FALSE]
+Phe_Phecode_communes <- Phe_Phecode[, colonnes_communes, drop = FALSE]
+
+# Fusion des jeux de données 
+mc_ms_communes <- rbind(Phe_OMIM_communes, Phe_Phecode_communes)
+
+# Filtre des maladies sans variabilité 
+mc_ms_communes_filtre_row <- mc_ms_communes %>%
+  filter(rowSums(mc_ms_communes)!=0)
+mc_ms_communes_filtre_col_row <- mc_ms_communes_filtre_row %>%
+  select(where(~sum(.) != 0))
+mc_ms_communes_filtre_col_row <- mc_ms_communes_filtre_row[, colSums(mc_ms_communes_filtre_row) != 0]
+
+phenotype_maladie_s_c <- mc_ms_communes_filtre_col_row
+phenotype_maladie_s_c <-  as.data.frame(phenotype_maladie_s_c)
+
+# Sauvegarde du jeu de données prétraité
+save(phenotype_maladie_s_c, file="phenotype_maladie_s_c.RData")
+```
+
+## Chargement
+
+```{r load_data}
+
+# Chargement du jeu de données sauvegardé 
+load('phenotype_maladie_s_c.RData')
+
+# Fichiers HPO pour obtenir le nom des phénotypes 
+hpo_url <- "https://raw.githubusercontent.com/obophenotype/human-phenotype-ontology/master/hp.obo"
+hpo <- get_ontology(hpo_url, extract_tags = 'everything')
+
+name_ph <- hpo$name
+formatted_colnames <- gsub("\\.", ":", colnames(phenotype_maladie_s_c))
+
+# Changement des codes phénotypes par leur nom complet
+colnames(phenotype_maladie_s_c) <- name_ph[formatted_colnames]
+
+```
+
+## Structure des données
+
+```{r vizu_data}
+
+# Fonction utilitaire pour calculer le pourcentage de valeurs non-nulles
+sparsity_stats <- function(matrix) {
+  n_nonzero <- sum(matrix != 0)
+  total <- prod(dim(matrix))
+  return(list(
+    densité = n_nonzero/total * 100,
+    nb_nonzero = n_nonzero
+  ))
+}
+
+## Statistiques descriptives
+
+# Séparation des maladies simples et complexes
+maladies_simples <- phenotype_maladie_s_c[1:6102,]
+maladies_complexes <- phenotype_maladie_s_c[6103:7064,]
+
+# Calcul des statistiques
+stats_total <- sparsity_stats(phenotype_maladie_s_c)
+stats_simples <- sparsity_stats(maladies_simples)
+stats_complexes <- sparsity_stats(maladies_complexes)
+
+# Affichage des résultats
+cat(sprintf("Statistiques de densité de la matrice:\n  - Totale: %.2f%%\n  - Maladies simples: %.2f%%\n  - Maladies complexes: %.2f%%",
+            stats_total$densité,
+            stats_simples$densité,
+            stats_complexes$densité))
+
+```
+
+::: {style="test-align:justify"}
+On observe que la matrice initiale est creuse. Cela est à prendre en compte dans la suite de l'analyse.
+:::
+
+```{r}
+## Distribution des associations par type de maladie
+# Calcul du nombre de phénotypes par maladie
+phenotypes_par_maladie <- rowSums(phenotype_maladie_s_c != 0)
+
+# Création d'un dataframe pour ggplot
+df_dist <- data.frame(
+  nb_phenotypes = phenotypes_par_maladie,
+  type = c(rep("Simple", 6102), rep("Complexe", 962))
+)
+
+# Visualisation avec des boxplots
+ggplot(df_dist, aes(x = type, y = nb_phenotypes, fill = type)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Distribution du nombre de phénotypes par type de maladie",
+       x = "Type de maladie",
+       y = "Nombre de phénotypes associés")+
+  theme(legend.position = 'none')
+```
+
+```{r}
+## Analyse des phénotypes les plus fréquents
+# Calcul des fréquences des phénotypes
+phenotype_freq <- colSums(phenotype_maladie_s_c != 0)
+top_n <- 20
+
+# Création d'un dataframe pour les top phénotypes
+top_phenotypes <- data.frame(
+  phenotype = names(sort(phenotype_freq, decreasing = TRUE)[1:top_n]),
+  frequency = sort(phenotype_freq, decreasing = TRUE)[1:top_n]
+)
+
+# Visualisation
+ggplot(top_phenotypes, aes(x = reorder(phenotype, frequency), y = frequency)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "Phénotypes les plus fréquents",
+       x = "Phénotype",
+       y = "Nombre de maladies associées")
+```

@@ -3,3 +3,29 @@
 .RData
 .Ruserdata
 Data/origin_jaccard.csv
+Matrices Jules sans hiérarchie/coord_fact_mds_cosine.RData
+Matrices Jules sans hiérarchie/coord_fact_mds_dice.RData
+Matrices Jules sans hiérarchie/coord_fact_mds_hamming.RData
+Matrices Jules sans hiérarchie/coord_fact_mds_kulczynski.RData
+Matrices Jules sans hiérarchie/coord_fact_mds_tanimoto.RData
+Matrices Jules sans hiérarchie/data_classif_acm.RData
+Matrices Jules sans hiérarchie/data_classif_cosine.RData
+Matrices Jules sans hiérarchie/data_classif_dice.RData
+Matrices Jules sans hiérarchie/data_classif_embedding.RData
+Matrices Jules sans hiérarchie/data_classif_hamming.RData
+Matrices Jules sans hiérarchie/data_classif_jaccard.RData
+Matrices Jules sans hiérarchie/data_classif_kulczynski.RData
+Matrices Jules sans hiérarchie/data_classif_ochiai.RData
+Matrices Jules sans hiérarchie/data_classif_ot_jaccard.RData
+Matrices Jules sans hiérarchie/data_classif_sorensen.RData
+Matrices Jules sans hiérarchie/data_classif_tanimoto.RData
+Matrices Jules sans hiérarchie/dist_cosine_mx.RData
+Matrices Jules sans hiérarchie/dist_or_dice_mx.RData
+Matrices Jules sans hiérarchie/dist_or_hamming_mx.RData
+Matrices Jules sans hiérarchie/dist_or_kulczynski_mx.RData
+Matrices Jules sans hiérarchie/dist_or_tanimoto_mx.RData
+Matrices Jules sans hiérarchie/matrice_assignation_sorensen.RData
+Matrices Jules sans hiérarchie/phenotype_maladie_s_c (1).RData
+Matrices Jules sans hiérarchie/res.mfa.toutes.distances.RData
+Matrices Jules sans hiérarchie/results_all_distances.RData
+Matrices Jules sans hiérarchie/silhouette_sorensen.RData
