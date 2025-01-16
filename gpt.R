@@ -60,7 +60,7 @@ prompt <- "Based on the function of the CACNA1H gene, could this gene be involve
 "
 #Final 
 library(stringr)
-responses <- vector("character", 10)
+responses <- vector("character", 50)
 disease <- "Adrenal hypofunction"
 gene <- "CACNA1H"
 
@@ -83,6 +83,10 @@ REASON: [enter one short sentence]
 ",gene, disease, gene, disease
 )
 
+for (i in 1:50){
+  responses[i] <- generate("llama3", prompt = prompt, output = "text")
+}
+
 #Fonction automatisation
 
 # Fonction pour collecter les scores
@@ -94,8 +98,8 @@ collect_scores <- function(prompt, gene, disease, n_scores = 5, max_attempts = 5
     attempts <- attempts + 1
     tryCatch({
       response <- generate("llama3", prompt = prompt, output = "text")
-      score <- as.numeric(str_extract(response, "\\d+"))
-      
+      score <- as.numeric(sub(".*SCORE:\\s*(\\d+).*", "\\1", response))
+
       if (!is.na(score)) {
         scores <- c(scores, score)
       }
@@ -155,11 +159,12 @@ REASON: [enter one short sentence]",
 }
 
 # Application sur le jeu de test
-test <- df_tidy[sample(nrow(df_tidy), 3), ]
-results <- do.call(rbind, apply(test, 1, function(row) {
+test <- df_tidy[sample(nrow(df_tidy), 1), ]
+system.time(results <- do.call(rbind, apply(test, 1, function(row) {
   analyze_gene_disease(
     gene = row["gene"], 
     disease = row["disease"]
   )
 }))
+)
 
