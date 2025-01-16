@@ -39,8 +39,37 @@ library(vegan)
 library(reshape)
 library(DataExplorer)
 library(smacof)
+library(proxy)
 
 ######################################################### 1) Matrices de distance
+# Autres distances ----
+
+dist_or_tanimoto <- dist.binary(phenotype_maladie_s_c, method = 3) 
+dist_or_tanimoto <- as.data.frame(as.matrix(dist_or_tanimoto))
+dist_or_tanimoto <- dist_or_tanimoto[6103:7064, 1:6102]
+dist_or_tanimoto_mx <- as.matrix(dist_or_tanimoto)
+
+dist_or_hamming <- dist.binary(phenotype_maladie_s_c, method = 2)
+dist_or_hamming <- as.data.frame(as.matrix(dist_or_hamming))
+dist_or_hamming <- dist_or_hamming[6103:7064, 1:6102]
+dist_or_hamming_mx <- as.matrix(dist_or_hamming)
+
+dist_or_kulczynski  <- dist.binary(phenotype_maladie_s_c, method = 4)
+dist_or_kulczynski <- as.data.frame(as.matrix(dist_or_kulczynski))
+dist_or_kulczynski <- dist_or_kulczynski[6103:7064, 1:6102]
+dist_or_kulczynski_mx <- as.matrix(dist_or_kulczynski)
+
+dist_or_dice <- dist.binary(phenotype_maladie_s_c, method = 6) 
+dist_or_dice <- as.data.frame(as.matrix(dist_or_dice))
+dist_or_dice <- dist_or_dice[6103:7064, 1:6102]
+dist_or_dice_mx <- as.matrix(dist_or_dice)
+
+dist_cosine <- dist(phenotype_maladie_s_c, method = "cosine")
+dist_cosine <- as.data.frame(as.matrix(dist_cosine))
+dist_cosine <- dist_cosine[6103:7064, 1:6102]
+dist_cosine_mx <- as.matrix(dist_cosine)
+
+
 # Calculate Jaccard distance ----
 
 
@@ -73,10 +102,20 @@ save(dist_or_jaccard_mx, file="dist_or_jaccard_mx.RData")
 save(dist_or_sorensen_mx, file="dist_or_sorensen_mx.RData")
 save(dist_or_ochiai_mx, file="dist_or_ochiai_mx.RData")
 
+save(dist_or_tanimoto_mx, file="dist_or_tanimoto_mx.RData")
+save(dist_or_hamming_mx, file="dist_or_hamming_mx.RData")
+save(dist_or_kulczynski_mx, file="dist_or_kulczynski_mx.RData")
+save(dist_or_dice_mx, file="dist_or_dice_mx.RData")
+save(dist_cosine_mx, file="dist_cosine_mx.RData")
+
 # Load distance matrices ----
 load("dist_or_jaccard_mx.RData")
 load("dist_or_ochiai_mx.RData")
 load("dist_or_sorensen_mx.RData")
+
+
+
+
 
 ######################################################### 2) Obtention des coordonnées factorielles
 
@@ -381,7 +420,7 @@ process_multiple_rows <- function(dta, n_perm, start_idx, end_idx) {
   return(results_df)
 }
 
-tableau_permutation <- process_multiple_rows(phenotype_maladie_s_c, n_perm = 5, start_idx = 6103, end_idx = 7064)
+tableau_permutation <- process_multiple_rows(phenotype_maladie_s_c, n_perm = 10, start_idx = 6103, end_idx = 7064)
 tableau_permutation$threshold <- as.numeric(tableau_permutation$threshold)
 head(tableau_permutation)
 save(tableau_permutation, file="tableau_permutation.RData")
@@ -507,9 +546,9 @@ mc_indices <- 6103:7064
 
 library(cluster)
 library(factoextra)
-silhouette_sorensen  <- fviz_nbclust(data_classif_sorensen, 
-                                     kmeans, 
-                                     method = "silhouette", 
+silhouette_sorensen  <- fviz_nbclust(data_classif_sorensen,
+                                     kmeans,
+                                     method = "silhouette",
                                      k.max = 800)
 silhouette_sorensen
 save(silhouette_sorensen, file="silhouette_sorensen.RData")
@@ -517,9 +556,9 @@ hc_sorensen <- HCPC(data_classif_sorensen,
                     nb.clust = -1)
 save(hc_sorensen, file="hc_sorensen.RData")
 
-silhouette_ochiai  <- fviz_nbclust(data_classif_ochiai, 
-                                   kmeans, 
-                                   method = "silhouette", 
+silhouette_ochiai  <- fviz_nbclust(data_classif_ochiai,
+                                   kmeans,
+                                   method = "silhouette",
                                    k.max = 800)
 silhouette_ochiai
 hc_ochiai <- HCPC(data_classif_ochiai,
@@ -527,36 +566,36 @@ hc_ochiai <- HCPC(data_classif_ochiai,
 save(hc_ochiai, file="hc_ochiai.RData")
 
 
-silhouette_jaccard <- fviz_nbclust(data_classif_jaccard, 
-                                   kmeans, 
-                                   method = "silhouette", 
+silhouette_jaccard <- fviz_nbclust(data_classif_jaccard,
+                                   kmeans,
+                                   method = "silhouette",
                                    k.max = 800)
 silhouette_jaccard
 hc_jaccard <- HCPC(data_classif_jaccard,
                    nb.clust = -1)
 save(hc_jaccard, file="hc_jaccard.RData")
 
-silhouette_ot_jaccard<- fviz_nbclust(data_classif_ot_jaccard, 
-                                     kmeans, 
-                                     method = "silhouette", 
+silhouette_ot_jaccard<- fviz_nbclust(data_classif_ot_jaccard,
+                                     kmeans,
+                                     method = "silhouette",
                                      k.max = 800)
 silhouette_ot_jaccard
 hc_ot_jaccard <- HCPC(data_classif_ot_jaccard,
                       nb.clust = -1)
 save(hc_ot_jaccard, file="hc_ot_jaccard.RData")
 
-silhouette_embedding- fviz_nbclust(data_classif_embedding, 
-                                   kmeans, 
-                                   method = "silhouette", 
+silhouette_embedding- fviz_nbclust(data_classif_embedding,
+                                   kmeans,
+                                   method = "silhouette",
                                    k.max = 800)
 silhouette_embedding
 hc_embedding <- HCPC(data_classif_embedding,
                      nb.clust = -1)
 save(hc_embedding, file="hc_embedding.RData")
 
-silhouette_acm <- fviz_nbclust(data_classif_acm, 
-                               kmeans, 
-                               method = "silhouette", 
+silhouette_acm <- fviz_nbclust(data_classif_acm,
+                               kmeans,
+                               method = "silhouette",
                                k.max = 800)
 silhouette_acm
 hc_acm <- HCPC(data_classif_acm,
