@@ -1762,51 +1762,62 @@ rownames(phenotype_maladie_s_c[6102,])
 dist_or_jaccard &lt;- dist.binary(phenotype_maladie_s_c, method = 1)
 dist_or_jaccard &lt;- as.data.frame(as.matrix(dist_or_jaccard))
 dist_or_jaccard &lt;- dist_or_jaccard[6103:7064, 1:6102]  # Extraction du sous-ensemble MC-MS
-dist_or_jaccard_mx &lt;- as.matrix(dist_or_jaccard)</code></pre>
+dist_or_jaccard_mx &lt;- as.matrix(dist_or_jaccard)
+
+save(dist_or_jaccard_mx, file=&quot;dist_or_jaccard_mx.RData&quot;)</code></pre>
 </div>
-<div id="hamming-sokal-michener" class="section level2" number="3.2">
-<h2><span class="header-section-number">3.2</span> Hamming (Sokal &amp;
+<div id="smc-sokal-et-michener" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> SMC (Sokal et
 Michener)</h2>
-<p><span class="math display">\[d_{Jaccard}=\sqrt{1-\frac{a+d}{a+b+c+d}}\]</span></p>
-<pre class="r"><code>dist_or_hamming &lt;- dist.binary(phenotype_maladie_s_c, method = 2)
-dist_or_hamming &lt;- as.data.frame(as.matrix(dist_or_hamming))
-dist_or_hamming &lt;- dist_or_hamming[6103:7064, 1:6102]
-dist_or_hamming_mx &lt;- as.matrix(dist_or_hamming)</code></pre>
+<p><span class="math display">\[d_{SMC}=\sqrt{1-\frac{a+d}{a+b+c+d}}\]</span></p>
+<pre class="r"><code>dist_or_smc &lt;- dist.binary(phenotype_maladie_s_c, method = 2)
+dist_or_smc &lt;- as.data.frame(as.matrix(dist_or_smc))
+dist_or_smc &lt;- dist_or_smc[6103:7064, 1:6102]
+dist_or_smc_mx &lt;- as.matrix(dist_or_smc)
+
+save(dist_or_smc_mx, file=&quot;dist_or_hamming_mx.RData&quot;)</code></pre>
 </div>
-<div id="tanimoto-sokal-sneath" class="section level2" number="3.3">
-<h2><span class="header-section-number">3.3</span> Tanimoto (Sokal &amp;
-Sneath)</h2>
-<p><span class="math display">\[d_{Jaccard}=\sqrt{1-\frac{a}{a+2(b+c)}}\]</span></p>
-<pre class="r"><code>dist_or_tanimoto &lt;- dist.binary(phenotype_maladie_s_c, method = 3) 
-dist_or_tanimoto &lt;- as.data.frame(as.matrix(dist_or_tanimoto))
-dist_or_tanimoto &lt;- dist_or_tanimoto[6103:7064, 1:6102]
-dist_or_tanimoto_mx &lt;- as.matrix(dist_or_tanimoto)</code></pre>
+<div id="sokal-et-sneath" class="section level2" number="3.3">
+<h2><span class="header-section-number">3.3</span> Sokal et Sneath</h2>
+<p><span class="math display">\[d_{Sokal\}=\sqrt{1-\frac{a}{a+2(b+c)}}\]</span></p>
+<pre class="r"><code>dist_or_sokal &lt;- dist.binary(phenotype_maladie_s_c, method = 3) 
+dist_or_sokal &lt;- as.data.frame(as.matrix(dist_or_sokal))
+dist_or_sokal &lt;- dist_or_sokal[6103:7064, 1:6102]
+dist_or_sokal_mx &lt;- as.matrix(dist_or_sokal)
+
+save(dist_or_sokal_mx, file=&quot;dist_or_sokal_mx.RData&quot;)</code></pre>
 </div>
-<div id="kulczynski-rogers-et-tanimoto" class="section level2" number="3.4">
-<h2><span class="header-section-number">3.4</span> Kulczynski (Rogers et
-Tanimoto)</h2>
-<p><span class="math display">\[d_{Jaccard}=\sqrt{1-\frac{a+d}{a+2(b+c)+d}}\]</span></p>
-<pre class="r"><code>dist_or_kulczynski  &lt;- dist.binary(phenotype_maladie_s_c, method = 4)
-dist_or_kulczynski &lt;- as.data.frame(as.matrix(dist_or_kulczynski))
-dist_or_kulczynski &lt;- dist_or_kulczynski[6103:7064, 1:6102]
-dist_or_kulczynski_mx &lt;- as.matrix(dist_or_kulczynski)</code></pre>
+<div id="rogers-et-tanimoto" class="section level2" number="3.4">
+<h2><span class="header-section-number">3.4</span> Rogers et
+Tanimoto</h2>
+<p><span class="math display">\[d_{Rogers}=\sqrt{1-\frac{a+d}{a+2(b+c)+d}}\]</span></p>
+<pre class="r"><code>dist_or_rogers  &lt;- dist.binary(phenotype_maladie_s_c, method = 4)
+dist_or_rogers &lt;- as.data.frame(as.matrix(dist_or_rogers))
+dist_or_rogers &lt;- dist_or_rogers[6103:7064, 1:6102]
+dist_or_rogers_mx &lt;- as.matrix(dist_or_rogers)
+
+save(dist_or_rogers_mx, file=&quot;dist_or_rogers_mx.RData&quot;)</code></pre>
 </div>
 <div id="sorensen-ou-dice" class="section level2" number="3.5">
 <h2><span class="header-section-number">3.5</span> Sorensen (ou
 Dice)</h2>
-<p><span class="math display">\[d_{Jaccard}=\sqrt{1-\frac{2a}{2a+b+c}}\]</span></p>
+<p><span class="math display">\[d_{Sorensen}=\sqrt{1-\frac{2a}{2a+b+c}}\]</span></p>
 <pre class="r"><code>dist_or_sorensen &lt;- dist.binary(phenotype_maladie_s_c, method = 5)
 dist_or_sorensen &lt;- as.data.frame(as.matrix(dist_or_sorensen))
 dist_or_sorensen &lt;- dist_or_sorensen[6103:7064, 1:6102]
-dist_or_sorensen_mx &lt;- as.matrix(dist_or_sorensen)</code></pre>
+dist_or_sorensen_mx &lt;- as.matrix(dist_or_sorensen)
+
+load(&quot;dist_or_sorensen_mx.RData&quot;)</code></pre>
 </div>
-<div id="dice-hamann" class="section level2" number="3.6">
-<h2><span class="header-section-number">3.6</span> Dice (Hamann)</h2>
-<p><span class="math display">\[d_{Jaccard}=\sqrt{1-\frac{a-(b+c)+d}{a+b+c+d}}\]</span></p>
-<pre class="r"><code>dist_or_dice &lt;- dist.binary(phenotype_maladie_s_c, method = 6) 
-dist_or_dice &lt;- as.data.frame(as.matrix(dist_or_dice))
-dist_or_dice &lt;- dist_or_dice[6103:7064, 1:6102]
-dist_or_dice_mx &lt;- as.matrix(dist_or_dice)</code></pre>
+<div id="hamann" class="section level2" number="3.6">
+<h2><span class="header-section-number">3.6</span> Hamann</h2>
+<p><span class="math display">\[d_{Hamann}=\sqrt{1-\frac{a-(b+c)+d}{a+b+c+d}}\]</span></p>
+<pre class="r"><code>dist_or_hamann &lt;- dist.binary(phenotype_maladie_s_c, method = 6) 
+dist_or_hamann &lt;- as.data.frame(as.matrix(dist_or_hamann))
+dist_or_hamann &lt;- dist_or_hamann[6103:7064, 1:6102]
+dist_or_hamann_mx &lt;- as.matrix(dist_or_hamann)
+
+save(dist_or_hamann_mx, file=&quot;dist_or_hamann_mx.RData&quot;)</code></pre>
 </div>
 <div id="ochiai" class="section level2" number="3.7">
 <h2><span class="header-section-number">3.7</span> Ochiai</h2>
@@ -1814,7 +1825,9 @@ dist_or_dice_mx &lt;- as.matrix(dist_or_dice)</code></pre>
 <pre class="r"><code>dist_or_ochiai &lt;- dist.binary(phenotype_maladie_s_c, method = 7)
 dist_or_ochiai &lt;- as.data.frame(as.matrix(dist_or_ochiai))
 dist_or_ochiai &lt;- dist_or_ochiai[6103:7064, 1:6102]
-dist_or_ochiai_mx &lt;- as.matrix(dist_or_ochiai)</code></pre>
+dist_or_ochiai_mx &lt;- as.matrix(dist_or_ochiai)
+
+load(&quot;dist_or_ochiai_mx.RData&quot;)</code></pre>
 </div>
 <div id="cosine" class="section level2" number="3.8">
 <h2><span class="header-section-number">3.8</span> Cosine</h2>
@@ -1823,7 +1836,9 @@ c)}}\]</span></p>
 <pre class="r"><code>dist_cosine &lt;- dist(phenotype_maladie_s_c, method = &quot;cosine&quot;)
 dist_cosine &lt;- as.data.frame(as.matrix(dist_cosine))
 dist_cosine &lt;- dist_cosine[6103:7064, 1:6102]
-dist_cosine_mx &lt;- as.matrix(dist_cosine)</code></pre>
+dist_cosine_mx &lt;- as.matrix(dist_cosine)
+
+save(dist_cosine_mx, file=&quot;dist_cosine_mx.RData&quot;)</code></pre>
 </div>
 </div>
 <div class="footnotes footnotes-end-of-document">
