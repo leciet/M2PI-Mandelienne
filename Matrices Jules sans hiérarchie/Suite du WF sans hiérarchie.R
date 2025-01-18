@@ -89,6 +89,15 @@ names(data_classif_rogers_tanimoto) <- paste0("D", 1:ncol(data_classif_rogers_ta
 names(data_classif_hamann) <- paste0("D", 1:ncol(data_classif_hamann))
 names(data_classif_cosine) <- paste0("D", 1:ncol(data_classif_cosine))
 
+data_classif_hamann <- data_classif_dice
+rm(data_classif_dice)
+data_classif_rogers_tanimoto <- data_classif_kulczynski
+rm(data_classif_kulczynski)
+data_classif_sokal_michener <- data_classif_hamming
+rm(data_classif_hamming)
+data_classif_sokal_sneath <- data_classif_tanimoto
+rm(data_classif_tanimoto)
+
 save(data_classif_sokal_sneath, file="data_classif_sokal_sneath.RData")
 save(data_classif_sokal_michener, file="data_classif_sokal_michener.RData")
 save(data_classif_rogers_tanimoto, file="data_classif_rogers_tanimoto.RData")
@@ -99,34 +108,40 @@ save(data_classif_cosine, file="data_classif_cosine.RData")
 
 # Fonctions vectorisées pour chaque type de distance
 calc_distances <- function(matrix1, vector1, method = "sorensen") {
-  # Points d'intersection et sommes (utilisés dans plusieurs métriques)
-  intersections <- matrix1 %*% vector1
-  sums1 <- rowSums(matrix1)
-  sum2 <- sum(vector1)
+  # Calcul du nombre d'éléments communs (intersections)
+  a <- matrix1 %*% vector1
+  # Nombre total d'éléments dans chaque ligne de la matrice
+  nb_elements_ensemble1 <- rowSums(matrix1)
+  b = nb_elements_ensemble1 - a
+  # Nombre total d'éléments dans le vecteur
+  nb_elements_ensemble2 <- sum(vector1)
+  c = nb_elements_ensemble2 - a
+  # Calcul du nombre d'éléments présents dans aucun des deux ensembles (d)
+  d <- ncol(matrix1) - (a + b + c)
   switch(method,
-         "sorensen" = {
-           1 - (2 * intersections) / (sums1 + sum2)
-         },
-         "ochiai" = {
-           1 - intersections / sqrt(sums1 * sum2)
-         },
          "jaccard" = {
-           1 - intersections / (sums1 + sum2 - intersections)
-         },
-         "sokal_sneath" = {
-           intersections / sqrt((sums1 + sum2 - intersections) * intersections)
+           sqrt(1-((a) / (a + b + c)))
          },
          "sokal_michener" = {
-           rowSums(abs(matrix1 - vector1))
+           sqrt(1-((a + d )/ (a + b + c+ d)))
          },
+         "sokal_sneath" = {
+           sqrt(1-((a * d) / (sqrt((a + b) + (a + c)+ (d + b) + (d + c)))))
+           },
          "rogers_tanimoto" = {
-           1 - 0.5 * (intersections/sums1 + intersections/sum2)
+           sqrt(1-((a + d )/ (a + 2*(b + c)+ d)))
+         },
+         "sorensen" = {
+           sqrt(1-((2*a)/ (2*a + b + c)))
          },
          "hamann" = {
-             2 * intersections / (sums1 + sum2)
+           sqrt(1-((a-(b + c) + d)/(a + b + c+ d)))
+         },
+         "ochiai" = {
+           sqrt(1-((a)/(sqrt(a + b)+(a + c))))
          },
          "cosinus" = {
-           1 - intersections / (sqrt(sums1) * sqrt(sum2))
+           1-((a)/(sqrt(a + b)+(a + c)))
          }
   )
 }
@@ -256,77 +271,116 @@ hopkins_stat <- hopkins(coord_fact_acm, n = 7063)
 print(hopkins_stat)
 VAT(coord_fact_acm)
 
-# Implémentation du COP-KMEANS
-cop_kmeans <- function(data, k, mc_inhamanns, max_iter = 100) {
-  # Initialisation
-  n <- nrow(data)
-  centroids <- as.matrix(data[mc_inhamanns[1:k], ])  # Utiliser les MC comme centroids initiaux
-  clusters <- rep(-1, n)
-  clusters[mc_inhamanns] <- 1:k  # Fixer les MC à leurs clusters
-  # Itérations
-  for(iter in 1:max_iter) {
-    old_clusters <- clusters
-    # Pour tous les points sauf les MC
-    for(i in setdiff(1:n, mc_inhamanns)) {
-      # Calculer distances aux centroids
-      distances <- apply(centroids, 1, function(cent) {
-        sqrt(sum((data[i,] - cent)^2))
-      })
-      # Assigner au centroid le plus proche
-      clusters[i] <- which.min(distances)
-    }
-    # Mettre à jour les centroids (sauf pour les clusters contenant uniquement une MC)
-    for(j in 1:k) {
-      cluster_points <- data[clusters == j & !seq_len(n) %in% mc_inhamanns, ]
-      if(nrow(as.matrix(cluster_points)) > 0) {
-        centroids[j,] <- colMeans(as.matrix(cluster_points))
-      }
-    }
-    # Vérifier convergence
-    if(all(clusters == old_clusters)) break
-  }
-  return(list(clusters = clusters, centroids = centroids))
-}
-
-mc_inhamanns=c(1:962)
-  
+library(conclust)
 # Application du COP-KMEANS sur chaque jeu de données
-result_classif_hamann <- cop_kmeans(data = data_classif_hamann,
-                                      k = length(mc_inhamanns),
-                                      mc_inhamanns = mc_inhamanns)
+mc_indices = c(1:962)
+data_classif_hamann_mx <- as.matrix(data_classif_hamann)
+mustLink <- data_classif_hamann[963:7064, ] 
+cantLink <- data_classif_hamann[1:962, ]  
+result_classif_hamann <- ckmeans(data = data_classif_hamann,
+                                      k = length(mc_indices),
+                                      mustLink,
+                                      cantLink)
 
-result_classif_ochiai <- cop_kmeans(data = data_classif_ochiai,
-                                    k = length(mc_inhamanns),
-                                    mc_inhamanns = mc_inhamanns)
+data_classif_rogers_tanimoto_mx <- as.matrix(data_classif_rogers_tanimoto)
+mustLink <- data_classif_rogers_tanimoto_mx[963:7064, ] 
+cantLink <- data_classif_rogers_tanimoto_mx[1:962, ]  
+result_classif_rogers_tanimoto <- ckmeans(data = data_classif_rogers_tanimoto_mx,
+                                 k = length(mc_indices),
+                                 mustLink,
+                                 cantLink)
 
-result_classif_jaccard <- cop_kmeans(data = data_classif_jaccard,
-                                     k = length(mc_inhamanns),
-                                     mc_inhamanns = mc_inhamanns)
+data_classif_sokal_michener_mx <- as.matrix(data_classif_sokal_michener)
+mustLink <- data_classif_sokal_michener_mx[963:7064, ] 
+cantLink <- data_classif_sokal_michener_mx[1:962, ]  
+result_classif_sokal_michener <- cop_kmeans(data = data_classif_sokal_michener_mx,
+                                    k = length(mc_indices),
+                                    mustLink,
+                                    cantLink)
 
-result_classif_ot_jaccard <- cop_kmeans(data = data_classif_ot_jaccard,
-                                        k = length(mc_inhamanns),
-                                        mc_inhamanns = mc_inhamanns)
+data_classif_sokal_sneath_mx <- as.matrix(data_classif_sokal_sneath)
+mustLink <- data_classif_sokal_sneath_mx[963:7064, ] 
+cantLink <- data_classif_sokal_sneath_mx[1:962, ]  
+result_classif_sokal_sneath <- cop_kmeans(data = data_classif_sokal_sneath_mx,
+                                     k = length(mc_indices),
+                                     mustLink,
+                                     cantLink)
 
+data_classif_cosine_mx <- as.matrix(data_classif_cosine)
+mustLink <- data_classif_cosine_mx[963:7064, ] 
+cantLink <- data_classif_cosine_mx[1:962, ]  
+result_classif_cosine <- cop_kmeans(data = data_classif_cosine_mx,
+                                        k = length(mc_indices),
+                                        mustLink,
+                                        cantLink)
+
+data_classif_embedding_mx <- as.matrix(data_classif_embedding)
+mustLink <- data_classif_embedding_mx[963:7064, ] 
+cantLink <- data_classif_embedding_mx[1:962, ]  
 result_classif_embedding <- cop_kmeans(data = data_classif_embedding,
-                                       k = length(mc_inhamanns),
-                                       mc_inhamanns = mc_inhamanns)
+                                       k = length(mc_indices),
+                                       mustLink,
+                                       cantLink)
 
+data_classif_acm_mx <- as.matrix(data_classif_acm)
+mustLink <- data_classif_acm_mx[963:7064, ] 
+cantLink <- data_classif_acm_mx[1:962, ]  
 result_classif_acm <- cop_kmeans(data = data_classif_acm,
-                                 k = length(mc_inhamanns),
-                                 mc_inhamanns = mc_inhamanns)
+                                 k = length(mc_indices),
+                                 mustLink,
+                                 cantLink)
+
+data_classif_ochiai_mx <- as.matrix(data_classif_ochiai)
+mustLink <- data_classif_ochiai_mx[963:7064, ] 
+cantLink <- data_classif_ochiai_mx[1:962, ]  
+result_classif_ochiai <- ckmeans(data = data_classif_ochiai_mx,
+                                 k = length(mc_indices),
+                                 mustLink,
+                                 cantLink)
+
+data_classif_jaccard_mx <- as.matrix(data_classif_jaccard)
+mustLink <- data_classif_jaccard_mx[963:7064, ] 
+cantLink <- data_classif_jaccard_mx[1:962, ]  
+result_classif_jaccard <- ckmeans(data = data_classif_jaccard_mx,
+                                 k = length(mc_indices),
+                                 mustLink,
+                                 cantLink)
+
+data_classif_sorensen_mx <- as.matrix(data_classif_sorensen)
+mustLink <- data_classif_sorensen_mx[963:7064, ] 
+cantLink <- data_classif_sorensen_mx[1:962, ]  
+result_classif_sorensen <- ckmeans(data = data_classif_sorensen_mx,
+                                 k = length(mc_indices),
+                                 mustLink,
+                                 cantLink)
+
+data_classif_ot_jaccard_mx <- as.matrix(data_classif_ot_jaccard)
+mustLink <- data_classif_ot_jaccard_mx[963:7064, ] 
+cantLink <- data_classif_ot_jaccard_mx[1:962, ]  
+result_classif_ot_jaccard <- ckmeans(data = data_classif_ot_jaccard_mx,
+                                 k = length(mc_indices),
+                                 mustLink,
+                                 cantLink)
 
 # Création d'une liste pour stocker tous les résultats
 resultats_classification <- list(
-  sorensen = result_classif_sorensen,
-  ochiai = result_classif_ochiai,
-  jaccard = result_classif_jaccard,
-  ot_jaccard = result_classif_ot_jaccard,
-  embedding = result_classif_embedding,
-  acm = result_classif_acm
+  classif_sorensen = result_classif_sorensen,
+  classif_ochiai = result_classif_ochiai,
+  classif_jaccard = result_classif_jaccard,
+  classif_ot_jaccard = result_classif_ot_jaccard,
+  classif_embedding = result_classif_embedding,
+  classif_acm = result_classif_acm, 
+  classif_hamann =result_classif_hamann,
+  classif_rogers_tanimoto =result_classif_rogers_tanimoto,
+  classif_sokal_michener =result_classif_sokal_michener,
+  classif_sokal_sneath =result_classif_sokal_sneath,
+  classif_cosine =result_classif_cosine,
 )
 
 # Sauvegarder les résultats
 save(resultats_classification, file = "resultats_classification.RData")
+
+non_assignees <- which(result$clusters == 0)  # 0 indique généralement le bruit
 
 # # Bibliothèques nécessaires
 # library(cluster)
