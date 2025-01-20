@@ -64,6 +64,13 @@ dist_or_hamann <- as.data.frame(as.matrix(dist_or_hamann))
 dist_or_hamann <- dist_or_hamann[6103:7064, 1:6102]
 dist_or_hamann_mx <- as.matrix(dist_or_hamann)
 
+
+dist_cosine <- dist(phenotype_maladie_s_c, method = "cosine")
+dist_cosine <- as.data.frame(as.matrix(dist_cosine))
+dist_cosine <- dist_cosine[6103:7064, 1:6102]
+dist_or_cosine_mx <- as.matrix(dist_cosine)
+
+save(dist_or_cosine_mx, file="dist_or_cosine_mx.RData")
 save(dist_or_sokal_sneath_mx, file="dist_or_sokal_sneath_mx.RData")
 save(dist_or_sokal_michener_mx, file="dist_or_sokal_michener_mx.RData")
 save(dist_or_rogers_tanimoto_mx, file="dist_or_rogers_tanimoto_mx.RData")
@@ -82,6 +89,7 @@ rm(dist_or_kulczynski_mx)
 load("dist_or_sokal_michener_mx.RData")
 dist_or_sokal_michener_mx <- dist_or_hamming_mx
 rm(dist_or_hamming_mx)
+load("dist_or_cosine_mx.RData")
 
 # Calculate Jaccard distance ----
 

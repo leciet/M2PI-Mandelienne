@@ -263,12 +263,12 @@ $$d_{SMC}=\sqrt{1-\frac{a+d}{a+b+c+d}}$$
 
 ```{r smc, eval=FALSE}
 
-dist_or_smc <- dist.binary(phenotype_maladie_s_c, method = 2)
-dist_or_smc <- as.data.frame(as.matrix(dist_or_smc))
-dist_or_smc <- dist_or_smc[6103:7064, 1:6102]
-dist_or_smc_mx <- as.matrix(dist_or_smc)
+dist_or_sokal_michener <- dist.binary(phenotype_maladie_s_c, method = 2)
+dist_or_sokal_michener <- as.data.frame(as.matrix(dist_or_sokal_michener))
+dist_or_sokal_michener <- dist_or_sokal_michener[6103:7064, 1:6102]
+dist_or_sokal_michener_mx <- as.matrix(dist_or_sokal_michener)
 
-save(dist_or_smc_mx, file="dist_or_smc_mx.RData")
+save(dist_or_sokal_michener_mx, file="dist_or_sokal_michener_mx.RData")
 
 ```
 
@@ -355,9 +355,9 @@ $$d_{Cosine} = 1 - \frac{a}{\sqrt{(a + b)(a + c)}}$$
 dist_cosine <- dist(phenotype_maladie_s_c, method = "cosine")
 dist_cosine <- as.data.frame(as.matrix(dist_cosine))
 dist_cosine <- dist_cosine[6103:7064, 1:6102]
-dist_cosine_mx <- as.matrix(dist_cosine)
+dist_or_cosine_mx <- as.matrix(dist_cosine)
 
-save(dist_cosine_mx, file="dist_cosine_mx.RData")
+save(dist_or_cosine_mx, file="dist_or_cosine_mx.RData")
 ```
 
 ## Comparaison des méthodes
