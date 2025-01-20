@@ -68,6 +68,78 @@ res.mfa.toutes.distances <- MFA(data_pour_afm.toutes.distances,
 # Sauvegarder l'AFM mise à jour
 save(res.mfa.toutes.distances, file = "res.mfa.toutes.distances.RData")
 
+# Visualisation des densités de distance avec ou sans permutation ----
+phenotype_maladie_s_c2 <- as.matrix(phenotype_maladie_s_c)
+row <- phenotype_maladie_s_c2[6103, ]
+other_rows <- matrix(as.numeric(phenotype_maladie_s_c2[-6103, ]), 
+                     nrow = nrow(phenotype_maladie_s_c2) - 1,
+                     byrow = FALSE)
+calc_distances <- function(matrix1, vector1) {
+  intersections <- matrix1 %*% vector1  # Calcule tous les points d'intersection d'un coup
+  sums1 <- rowSums(matrix1)  # Somme des lignes
+  sum2 <- sum(vector1)  # Somme du vecteur
+  1 - (2 * intersections) / (sums1 + sum2)
+}
+distance_originale <- calc_distances(other_rows, row)
+View(distance_originale)
+
+permuted_row1 <- sample(row, length(row), replace = FALSE)
+distance_permut_1 <- calc_distances(other_rows, permuted_row1)
+
+permuted_row2 <- sample(row, length(row), replace = FALSE)
+distance_permut_2 <- calc_distances(other_rows, permuted_row2)
+
+permuted_row3 <- sample(row, length(row), replace = FALSE)
+distance_permut_3 <- calc_distances(other_rows, permuted_row3)
+
+permuted_row4 <- sample(row, length(row), replace = FALSE)
+distance_permut_4 <- calc_distances(other_rows, permuted_row4)
+
+permuted_row5 <- sample(row, length(row), replace = FALSE)
+distance_permut_5 <- calc_distances(other_rows, permuted_row5)
+
+library(ggplot2)
+
+# Regrouper les distances dans un data.frame
+distance_data <- data.frame(
+  Distance = c(distance_originale, 
+               distance_permut_1, 
+               distance_permut_2, 
+               distance_permut_3, 
+               distance_permut_4, 
+               distance_permut_5),
+  Type = factor(c(
+    rep("Originale", length(distance_originale)),
+    rep("Permutation 1", length(distance_permut_1)),
+    rep("Permutation 2", length(distance_permut_2)),
+    rep("Permutation 3", length(distance_permut_3)),
+    rep("Permutation 4", length(distance_permut_4)),
+    rep("Permutation 5", length(distance_permut_5))
+  ))
+)
+
+# Visualisation avec ggplot2
+ggplot(distance_data, aes(x = Distance, color = Type, fill = Type)) +
+  geom_density(alpha = 0.3, size = 1) +  # Courbes de densité avec transparence
+  scale_color_manual(values = c("Originale" = "red", 
+                                "Permutation 1" = "black", 
+                                "Permutation 2" = "blue", 
+                                "Permutation 3" = "green", 
+                                "Permutation 4" = "purple", 
+                                "Permutation 5" = "orange")) +
+  scale_fill_manual(values = c("Originale" = "red", 
+                               "Permutation 1" = "black", 
+                               "Permutation 2" = "blue", 
+                               "Permutation 3" = "green", 
+                               "Permutation 4" = "purple", 
+                               "Permutation 5" = "orange")) +
+  labs(title = "Densité des distances (Originale vs 5 permutations)",
+       x = "Distance (Sørensen-Dice)",
+       y = "Densité") +
+  theme_minimal() +
+  theme(legend.title = element_blank())  # Retire le titre de la légende
+
+
 # Création des datas pour les futurs classifs ----
 
 # Classification hiérarchique pour les nouvelles méthodes
@@ -273,17 +345,32 @@ hopkins_stat <- hopkins(coord_fact_acm, n = 7063)
 print(hopkins_stat)
 VAT(coord_fact_acm)
 
+rm(list=ls())
+head(data_classif_hamann)
 library(conclust)
 # Application du COP-KMEANS sur chaque jeu de données
-mc_indices = c(1:962)
 data_classif_hamann_mx <- as.matrix(data_classif_hamann)
-mustLink <- data_classif_hamann[963:7064, ] 
-cantLink <- data_classif_hamann[1:962, ]  
-result_classif_hamann <- ckmeans(data = data_classif_hamann,
-                                      k = length(mc_indices),
+
+# Pour cantLink (points 1:962)
+indices_cant <- 1:962
+# Créer toutes les combinaisons possibles de 2 points parmi les indices
+pairs_cant <- combn(indices_cant, 2)
+# Convertir en matrice avec 2 colonnes
+cantLink <- t(pairs_cant)
+
+# Pour mustLink (points 963:7064)
+indices_must <- 963:7064
+# Créer toutes les combinaisons possibles de 2 points parmi les indices
+pairs_must <- combn(indices_must, 2)
+# Convertir en matrice avec 2 colonnes
+mustLink <- t(pairs_must)
+
+dim(cantLink)
+dim(mustLink)
+result_classif_hamann <- ckmeans(data = data_classif_hamann_mx,
+                                      k = 962,
                                       mustLink,
                                       cantLink)
-
 data_classif_rogers_tanimoto_mx <- as.matrix(data_classif_rogers_tanimoto)
 mustLink <- data_classif_rogers_tanimoto_mx[963:7064, ] 
 cantLink <- data_classif_rogers_tanimoto_mx[1:962, ]  
