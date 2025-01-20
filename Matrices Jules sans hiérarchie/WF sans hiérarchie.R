@@ -90,6 +90,7 @@ load("dist_or_sokal_michener_mx.RData")
 dist_or_sokal_michener_mx <- dist_or_hamming_mx
 rm(dist_or_hamming_mx)
 load("dist_or_cosine_mx.RData")
+dist_or_cosine_mx <- dist_cosine_mx
 
 # Calculate Jaccard distance ----
 

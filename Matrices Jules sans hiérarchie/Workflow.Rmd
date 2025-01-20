@@ -8,10 +8,10 @@ date: "2025-01-15"
 output: 
   html_document:
     toc: true
+    toc_float: true
     number_sections: true
     theme: flatly
 ---
-
 
 ```{r setup, include=FALSE}
 
@@ -224,17 +224,18 @@ ggplot(top_phenotypes, aes(x = reorder(phenotype, frequency), y = frequency)) +
        y = "Nombre de maladies associées")
 ```
 
-# Calcul de matrices de distances 
+# Calcul de matrices de distances
 
---------------------------------------------------------------------------------
-::: {style="test-align: justify"}
-Ici on cherche à caluler des distances binaires, c'est-à-dire des distances sur une matrice binaire avec **1=Présence** et **0=Absence**. <br>
-On note : 
+------------------------------------------------------------------------
+
+::: {#intro_distances style="test-align: justify"}
+Ici on cherche à caluler des distances binaires, c'est-à-dire des distances sur une matrice binaire avec **1=Présence** et **0=Absence**. <br> On note :
 :::
-- $n_{11} = a$ nombre de phénotypes présents dans les deux maladies
-- $n_{10} = b$ nombre de phénotypes présents uniquement dans la première maladie
-- $n_{01} = c$ nombre de phénotypes présents uniquement dans la deuxième maladie
-- $n_{00} = d$ nombre de phénotypes absents dans les deux maladies
+
+-   $n_{11} = a$ nombre de phénotypes présents dans les deux maladies
+-   $n_{10} = b$ nombre de phénotypes présents uniquement dans la première maladie
+-   $n_{01} = c$ nombre de phénotypes présents uniquement dans la deuxième maladie
+-   $n_{00} = d$ nombre de phénotypes absents dans les deux maladies
 
 ## Calcul des distances {.tabset}
 
@@ -261,7 +262,7 @@ save(dist_or_jaccard_mx, file="dist_or_jaccard_mx.RData")
 
 $$d_{SMC}=\sqrt{1-\frac{a+d}{a+b+c+d}}$$
 
-```{r smc, eval=FALSE}
+```{r smc,eval=FALSE}
 
 dist_or_sokal_michener <- dist.binary(phenotype_maladie_s_c, method = 2)
 dist_or_sokal_michener <- as.data.frame(as.matrix(dist_or_sokal_michener))
@@ -273,9 +274,10 @@ save(dist_or_sokal_michener_mx, file="dist_or_sokal_michener_mx.RData")
 ```
 
 ### Sokal et sneath {.unnumbered}
+
 $$d_{Sokal-Sneath}=\sqrt{1-\frac{a}{a+2(b+c)}}$$
 
-```{r sokal-sneath, eval=FALSE}
+```{r sokal-sneath,eval=FALSE}
 
 dist_or_sokal_sneath <- dist.binary(phenotype_maladie_s_c, method = 3) 
 dist_or_sokal_sneath <- as.data.frame(as.matrix(dist_or_sokal_sneath))
@@ -290,7 +292,7 @@ save(dist_or_sokal_sneath_mx, file="dist_or_sokal_sneath_mx.RData")
 
 $$d_{Rogers-Tanimoto}=\sqrt{1-\frac{a+d}{a+2(b+c)+d}}$$
 
-```{r rogers-tanimoto, eval=FALSE}
+```{r rogers-tanimoto,eval=FALSE}
 
 dist_or_rogers_tanimoto  <- dist.binary(phenotype_maladie_s_c, method = 4)
 dist_or_rogers_tanimoto <- as.data.frame(as.matrix(dist_or_rogers_tanimoto))
@@ -350,7 +352,7 @@ save(dist_or_ochiai_mx, file="dist_or_ochiai_mx.RData")
 
 $$d_{Cosine} = 1 - \frac{a}{\sqrt{(a + b)(a + c)}}$$
 
-```{r cosine,eval=FALSE}
+```{r cosine, eval=FALSE}
 
 dist_cosine <- dist(phenotype_maladie_s_c, method = "cosine")
 dist_cosine <- as.data.frame(as.matrix(dist_cosine))
@@ -361,6 +363,7 @@ save(dist_or_cosine_mx, file="dist_or_cosine_mx.RData")
 ```
 
 ## Comparaison des méthodes
+
 ```{r table_comp, echo=FALSE}
 
 # Créer un tableau avec des données
@@ -402,4 +405,19 @@ tableau <- data.frame(
 
 # Afficher le tableau avec kable pour HTML
 kable(tableau, caption = "Comparaison des méthodes de distance", format = "html", table.attr = "class='table table-bordered'")
+```
+
+::: {#chargement_distances style="text-align:justify"}
+Les calculs de distance étant assez longs, nous avons sauvegarder les matrices dans des objets RData. Le code suivant permet de charger les matrices dans notre environnement
+:::
+
+```{r load_distance}
+load("dist_or_sokal_sneath_mx.RData")
+load("dist_or_hamann_mx.RData")
+load("dist_or_rogers_tanimoto_mx.RData")
+load("dist_or_sokal_michener_mx.RData")
+load("dist_or_cosine_mx.RData")
+load("dist_or_jaccard_mx.RData")
+load("dist_or_ochiai_mx.RData")
+load("dist_or_sorensen_mx.RData")
 ```
