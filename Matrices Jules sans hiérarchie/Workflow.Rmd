@@ -686,7 +686,7 @@ Afin de comparer l'ensemble de nos méthodes, nous réalisons une Analyse Factor
 
 ## Mise en forme des données pour l'AFM 
 
-```{r}
+```{r data_afm,eval=FALSE}
 maladies_acm <- res.acm$ind.sup$coord
 maladies_sorensen <- as.data.frame(coord_fact_mds_sorensen$conf.row)
 maladies_ochiai <- as.data.frame(coord_fact_mds_ochiai$conf.row)
@@ -717,16 +717,193 @@ save(data_pour_afm.toutes.distances, file = "data_pour_afm.toutes.distances.RDat
 
 ## AFM
 
-```{r}
+```{r afm, eval=FALSE}
+load("data_pour_afm.toutes.distances.RData")
 res.mfa.toutes.distances <- MFA(data_pour_afm.toutes.distances, 
                                 group = c(384, 384, 384, 384, 384, 384,  # Groupes existants
                                           384, 384, 384, 384, 384),  # Nouveaux groupes
                                 type = c("c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c"), 
                                 ncp = 2,             
                                 name.group = c("ACM", "Sorensen", "Ochiai", "Jaccard", "Jaccard_OT", "Embedding",
-                                               "sokal_sneath", "sokal_michener", "rogers_tanimoto", "Hamann", "Cosine"))
+                                               "sokal_sneath", "sokal_michener", "rogers_tanimoto", "Hamann", "Cosine"),graph = FALSE)
 save(res.mfa.toutes.distances, file = "res.mfa.toutes.distances.RData")
 ```
 
+## Représentation graphique 
 
+```{r plot_afm, message=FALSE, warning=FALSE}
+load("res.mfa.toutes.distances.RData")
+plot(res.mfa.toutes.distances,choix="group",title="Graphe des groupes")
+plot(res.mfa.toutes.distances,choix="axes",title="Graphe des axes partiels")
+```
+
+# Assignation de gènes 
+
+## Permutations 
+
+### Définnition des fonctions 
+
+```{r fonction_permut}
+# Fonctions vectorisées pour chaque type de distance afin d'effectuer plus rapidement les calculs
+calc_distances <- function(matrix1, vector1, method = "sorensen") {
+  # Calcul du nombre d'éléments communs (intersections)
+  a <- matrix1 %*% vector1
+  # Nombre total d'éléments dans chaque ligne de la matrice
+  nb_elements_ensemble1 <- rowSums(matrix1)
+  b = nb_elements_ensemble1 - a
+  # Nombre total d'éléments dans le vecteur
+  nb_elements_ensemble2 <- sum(vector1)
+  c = nb_elements_ensemble2 - a
+  # Calcul du nombre d'éléments présents dans aucun des deux ensembles (d)
+  d <- ncol(matrix1) - (a + b + c)
+  switch(method,
+         "jaccard" = {
+           sqrt(1-((a) / (a + b + c)))
+         },
+         "sokal_michener" = {
+           sqrt(1-((a + d )/ (a + b + c+ d)))
+         },
+         "sokal_sneath" = {
+           sqrt(1-((a * d) / (sqrt((a + b) + (a + c)+ (d + b) + (d + c)))))
+         },
+         "rogers_tanimoto" = {
+           sqrt(1-((a + d )/ (a + 2*(b + c)+ d)))
+         },
+         "sorensen" = {
+           sqrt(1-((2*a)/ (2*a + b + c)))
+         },
+         "hamann" = {
+           sqrt(1-((a-(b + c) + d)/(a + b + c+ d)))
+         },
+         "ochiai" = {
+           sqrt(1-((a)/(sqrt(a + b)+(a + c))))
+         },
+         "cosinus" = {
+           1-((a)/(sqrt(a + b)+(a + c)))
+         }
+  )
+}
+
+# Fonction de permutation pour une ligne
+permut_all <- function(dta, n_perm, line_idx, distance_method = "sorensen") {
+  dta <- as.matrix(dta)
+  row <- dta[line_idx, ]
+  original_rowname <- rownames(dta)[line_idx]
+  pmin <- numeric(n_perm)
+  other_rows <- matrix(as.numeric(dta[-line_idx, ]), 
+                       nrow = nrow(dta) - 1,
+                       byrow = FALSE)
+  for(i in 1:n_perm) {
+    permuted_row <- sample(row, length(row), replace = FALSE)
+    distances <- calc_distances(other_rows, permuted_row, method = distance_method)
+    pmin[i] <- min(distances)
+  }
+  
+  return(c(rowname = original_rowname, threshold = min(pmin)))
+}
+
+# Fonction pour traiter plusieurs lignes
+process_multiple_rows <- function(dta, n_perm, start_idx, end_idx, distance_method = "sorensen") {
+  n_rows <- end_idx - start_idx + 1
+  results <- matrix(nrow = n_rows, ncol = 2)
+  for(i in 1:n_rows) {
+    curr_idx <- start_idx + i - 1
+    results[i, ] <- permut_all(dta, n_perm, curr_idx, distance_method)
+  }
+  results_df <- as.data.frame(results)
+  colnames(results_df) <- c("rowname", "threshold")
+  return(results_df)
+}
+
+# Fonction pour exécuter toutes les méthodes de distance
+run_all_distances <- function(phenotype_matrix, n_perm = 10, start_idx = 6103, end_idx = 7064) {
+  distance_methods <- c("sorensen", "ochiai", "jaccard", "sokal_sneath", 
+                        "sokal_michener", "rogers_tanimoto", "hamann", "cosinus")
+  results <- list()
+  for(method in distance_methods) {
+    cat("Processing", method, "distance...\n")
+    results[[method]] <- process_multiple_rows(
+      phenotype_matrix, 
+      n_perm = n_perm, 
+      start_idx = start_idx, 
+      end_idx = end_idx,
+      distance_method = method
+    )
+    results[[method]]$threshold <- as.numeric(results[[method]]$threshold)
+  }
+  return(results)
+}
+```
+
+### Application des permutations 
+
+```{r execute_permut}
+# Exécuter toutes les distances
+results_all <- run_all_distances(phenotype_maladie_s_c)
+save(results_all, file="results_all.RData")
+```
+
+```{r load_permut}
+load ("results_all.RData")
+```
+
+### Création des matrices d'assignation 
+
+```{r fonction_matrice_assignation}
+# Matrice d'assignation  ----
+create_all_association_matrices <- function(results_all) {
+  # Liste des matrices de distance à charger
+  distance_files <- list(
+    sorensen = "dist_or_sorensen_mx.RData",
+    ochiai = "dist_or_ochiai_mx.RData",
+    jaccard = "dist_or_jaccard_mx.RData",
+    sokal_sneath = "dist_or_sokal_sneath_mx.RData",
+    sokal_michener = "dist_or_sokal_michener_mx.RData",
+    rogers_tanimoto = "dist_or_rogers_tanimoto_mx.RData",
+    hamann = "dist_or_hamann_mx.RData",
+    cosine = "dist_cosine_mx.RData"
+  )
+  # Stocker les résultats
+  association_matrices <- list()
+  # Pour chaque distance
+  for(dist_name in names(distance_files)) {
+    # Charger la matrice de distance
+    load(distance_files[[dist_name]])
+    # Obtenir le nom de l'objet chargé
+    dist_matrix_name <- gsub("\\.RData$", "", distance_files[[dist_name]])
+    dist_matrix <- get(dist_matrix_name)
+    # Créer la matrice d'association
+    cat("Processing", dist_name, "distance...\n")
+    # Conversion en dataframe
+    dist_df <- as.data.frame(dist_matrix)
+    # Créer une matrice vide
+    association_matrix <- matrix(0, nrow = nrow(dist_df), ncol = ncol(dist_df))
+    # Pour chaque ligne
+    for(i in 1:nrow(dist_df)) {
+      # Récupérer le seuil correspondant
+      current_threshold <- results_all[[dist_name]]$threshold[i]
+      # Comparer les valeurs au seuil
+      association_matrix[i,] <- ifelse(dist_df[i,] <= current_threshold, 1, 0)
+    }
+    # Convertir en dataframe
+    association_matrix <- as.data.frame(association_matrix)
+    rownames(association_matrix) <- rownames(dist_df)
+    colnames(association_matrix) <- colnames(dist_df)
+    # Stocker la matrice
+    association_matrices[[dist_name]] <- association_matrix
+    # Sauvegarder la matrice
+    save_name <- paste0("association_matrix_", dist_name, ".RData")
+    save(association_matrix, file = save_name)
+  }
+  return(association_matrices)
+}
+```
+
+```{r matrice_assignation}
+
+# Créer toutes les matrices d'association
+association_matrices <- create_all_association_matrices(results_all)
+save(association_matrices, file="association_matrices.RData")
+
+```
 
