@@ -210,7 +210,9 @@ results_all <- run_all_distances(phenotype_maladie_s_c)
 save(results_all, file = "results_all_distances.RData")
 
 # Matrice d'assignation obtenus grâce aux seuils des permutations pour toutes les distances ----
-
+View(results_all$rogers_tanimoto)
+View(results_all$sokal_sneath)
+head(results_all$sokal_sneath)
 # Fonction pour créer les matrices d'association pour toutes les distances
 create_all_association_matrices <- function(results_all) {
   # Liste des matrices de distance à charger
@@ -298,6 +300,10 @@ result_classif_sokal_michener <- cop_kmeans(data = data_classif_sokal_michener_m
                                     mustLink,
                                     cantLink)
 
+save(result_classif_hamann, file="result_classif_hamann.RData")
+save(result_classif_rogers_tanimoto, file="result_classif_rogers_tanimoto.RData")
+save(result_classif_sokal_michener, file="result_classif_sokal_michener.RData")
+
 data_classif_sokal_sneath_mx <- as.matrix(data_classif_sokal_sneath)
 mustLink <- data_classif_sokal_sneath_mx[963:7064, ] 
 cantLink <- data_classif_sokal_sneath_mx[1:962, ]  
@@ -330,6 +336,10 @@ result_classif_acm <- cop_kmeans(data = data_classif_acm,
                                  mustLink,
                                  cantLink)
 
+save(result_classif_cosine, file="result_classif_cosine.RData")
+save(result_classif_embedding, file="result_classif_embedding.RData")
+save(result_classif_acm, file="result_classif_acm.RData")
+
 data_classif_ochiai_mx <- as.matrix(data_classif_ochiai)
 mustLink <- data_classif_ochiai_mx[963:7064, ] 
 cantLink <- data_classif_ochiai_mx[1:962, ]  
@@ -353,6 +363,10 @@ result_classif_sorensen <- ckmeans(data = data_classif_sorensen_mx,
                                  k = length(mc_indices),
                                  mustLink,
                                  cantLink)
+
+save(result_classif_ochiai, file="result_classif_ochiai.RData")
+save(result_classif_jaccard, file="result_classif_jaccard.RData")
+save(result_classif_sorensen, file="result_classif_sorensen.RData")
 
 data_classif_ot_jaccard_mx <- as.matrix(data_classif_ot_jaccard)
 mustLink <- data_classif_ot_jaccard_mx[963:7064, ] 
