@@ -8,10 +8,10 @@ date: "2025-01-15"
 output: 
   html_document:
     toc: true
-    toc_float: true
     number_sections: true
     theme: flatly
 ---
+
 
 ```{r setup, include=FALSE}
 
@@ -62,6 +62,7 @@ require(proxy)
 require(pheatmap)
 if (!require("ontologyIndex")) install.packages("ontologyIndex", repos = "http://cran.us.r-project.org")
 library(ontologyIndex)
+library(knitr)
 ```
 
 # Préparation des données
@@ -180,7 +181,7 @@ cat(sprintf("Statistiques de densité de la matrice:\n  - Totale: %.2f%%\n  - Ma
 On observe que la matrice initiale est creuse. Cela est à prendre en compte dans la suite de l'analyse.
 :::
 
-```{r}
+```{r boxplot_data}
 ## Distribution des associations par type de maladie
 # Calcul du nombre de phénotypes par maladie
 phenotypes_par_maladie <- rowSums(phenotype_maladie_s_c != 0)
@@ -201,7 +202,7 @@ ggplot(df_dist, aes(x = type, y = nb_phenotypes, fill = type)) +
   theme(legend.position = 'none')
 ```
 
-```{r}
+```{r phenotypes_data}
 ## Analyse des phénotypes les plus fréquents
 # Calcul des fréquences des phénotypes
 phenotype_freq <- colSums(phenotype_maladie_s_c != 0)
@@ -223,23 +224,26 @@ ggplot(top_phenotypes, aes(x = reorder(phenotype, frequency), y = frequency)) +
        y = "Nombre de maladies associées")
 ```
 
-# Calcul de matrices de distances {.tabset}
+# Calcul de matrices de distances 
 
+--------------------------------------------------------------------------------
 ::: {style="test-align: justify"}
 Ici on cherche à caluler des distances binaires, c'est-à-dire des distances sur une matrice binaire avec **1=Présence** et **0=Absence**. <br>
 On note : 
 :::
-- $n_{11} = a$ 
-- $n_{10} = b$
-- $n_{01} = c$
-- $n_{00} = d$
+- $n_{11} = a$ nombre de phénotypes présents dans les deux maladies
+- $n_{10} = b$ nombre de phénotypes présents uniquement dans la première maladie
+- $n_{01} = c$ nombre de phénotypes présents uniquement dans la deuxième maladie
+- $n_{00} = d$ nombre de phénotypes absents dans les deux maladies
 
+## Calcul des distances {.tabset}
 
-## Jaccard
+### Jaccard {.unnumbered}
 
 $$d_{Jaccard}=\sqrt{1-\frac{a}{a+b+c}}$$
 
-```{r eval=FALSE}
+```{r jaccard, eval=FALSE}
+
 index_ASCVD <- which(rownames(phenotype_maladie_s_c) == "ASCVD")
 rownames(phenotype_maladie_s_c[6103,])
 rownames(phenotype_maladie_s_c[6102,])
@@ -248,83 +252,154 @@ dist_or_jaccard <- dist.binary(phenotype_maladie_s_c, method = 1)
 dist_or_jaccard <- as.data.frame(as.matrix(dist_or_jaccard))
 dist_or_jaccard <- dist_or_jaccard[6103:7064, 1:6102]  # Extraction du sous-ensemble MC-MS
 dist_or_jaccard_mx <- as.matrix(dist_or_jaccard)
+
+save(dist_or_jaccard_mx, file="dist_or_jaccard_mx.RData")
+
 ```
 
-## SMC (Sokal et Michener)
+### SMC {.unnumbered}
 
 $$d_{SMC}=\sqrt{1-\frac{a+d}{a+b+c+d}}$$
 
-```{r eval=FALSE}
+```{r smc, eval=FALSE}
+
 dist_or_smc <- dist.binary(phenotype_maladie_s_c, method = 2)
 dist_or_smc <- as.data.frame(as.matrix(dist_or_smc))
 dist_or_smc <- dist_or_smc[6103:7064, 1:6102]
 dist_or_smc_mx <- as.matrix(dist_or_smc)
+
+save(dist_or_smc_mx, file="dist_or_smc_mx.RData")
+
 ```
 
-## Sokal et sneath
-$$d_{Jaccard}=\sqrt{1-\frac{a}{a+2(b+c)}}$$
+### Sokal et sneath {.unnumbered}
+$$d_{Sokal-Sneath}=\sqrt{1-\frac{a}{a+2(b+c)}}$$
 
-```{r eval=FALSE}
-dist_or_tanimoto <- dist.binary(phenotype_maladie_s_c, method = 3) 
-dist_or_tanimoto <- as.data.frame(as.matrix(dist_or_tanimoto))
-dist_or_tanimoto <- dist_or_tanimoto[6103:7064, 1:6102]
-dist_or_tanimoto_mx <- as.matrix(dist_or_tanimoto)
+```{r sokal-sneath, eval=FALSE}
+
+dist_or_sokal_sneath <- dist.binary(phenotype_maladie_s_c, method = 3) 
+dist_or_sokal_sneath <- as.data.frame(as.matrix(dist_or_sokal_sneath))
+dist_or_sokal_sneath <- dist_or_sokal_sneath[6103:7064, 1:6102]
+dist_or_sokal_sneath_mx <- as.matrix(dist_or_sokal_sneath)
+
+save(dist_or_sokal_sneath_mx, file="dist_or_sokal_sneath_mx.RData")
+
 ```
 
-## Kulczynski (Rogers et Tanimoto)
+### Rogers et Tanimoto {.unnumbered}
 
-$$d_{Jaccard}=\sqrt{1-\frac{a+d}{a+2(b+c)+d}}$$
+$$d_{Rogers-Tanimoto}=\sqrt{1-\frac{a+d}{a+2(b+c)+d}}$$
 
-```{r eval=FALSE}
-dist_or_kulczynski  <- dist.binary(phenotype_maladie_s_c, method = 4)
-dist_or_kulczynski <- as.data.frame(as.matrix(dist_or_kulczynski))
-dist_or_kulczynski <- dist_or_kulczynski[6103:7064, 1:6102]
-dist_or_kulczynski_mx <- as.matrix(dist_or_kulczynski)
+```{r rogers-tanimoto, eval=FALSE}
+
+dist_or_rogers_tanimoto  <- dist.binary(phenotype_maladie_s_c, method = 4)
+dist_or_rogers_tanimoto <- as.data.frame(as.matrix(dist_or_rogers_tanimoto))
+dist_or_rogers_tanimoto <- dist_or_rogers_tanimoto[6103:7064, 1:6102]
+dist_or_rogers_tanimoto_mx <- as.matrix(dist_or_rogers_tanimoto)
+
+save(dist_or_rogers_tanimoto_mx, file="dist_or_rogers_tanimoto_mx.RData")
+
 ```
 
-## Sorensen (ou Dice)
+### Sorensen {.unnumbered}
 
-$$d_{Jaccard}=\sqrt{1-\frac{2a}{2a+b+c}}$$
+$$d_{Sorensen}=\sqrt{1-\frac{2a}{2a+b+c}}$$
 
-```{r eval=FALSE}
+```{r sorensen, eval=FALSE}
+
 dist_or_sorensen <- dist.binary(phenotype_maladie_s_c, method = 5)
 dist_or_sorensen <- as.data.frame(as.matrix(dist_or_sorensen))
 dist_or_sorensen <- dist_or_sorensen[6103:7064, 1:6102]
 dist_or_sorensen_mx <- as.matrix(dist_or_sorensen)
+
+save(dist_or_sorensen_mx, file="dist_or_sorensen_mx.RData")
+
 ```
 
-## Dice (Hamann)
+### Hamann {.unnumbered}
 
-$$d_{Jaccard}=\sqrt{1-\frac{a-(b+c)+d}{a+b+c+d}}$$
+$$d_{Hamann}=\sqrt{1-\frac{a-(b+c)+d}{a+b+c+d}}$$
 
-```{r eval=FALSE}
-dist_or_dice <- dist.binary(phenotype_maladie_s_c, method = 6) 
-dist_or_dice <- as.data.frame(as.matrix(dist_or_dice))
-dist_or_dice <- dist_or_dice[6103:7064, 1:6102]
-dist_or_dice_mx <- as.matrix(dist_or_dice)
+```{r hamann,eval=FALSE}
+
+dist_or_hamann <- dist.binary(phenotype_maladie_s_c, method = 6) 
+dist_or_hamann <- as.data.frame(as.matrix(dist_or_hamann))
+dist_or_hamann <- dist_or_hamann[6103:7064, 1:6102]
+dist_or_hamann_mx <- as.matrix(dist_or_hamann)
+
+save(dist_or_hamann_mx, file="dist_or_hamann_mx.RData")
+
 ```
 
-## Ochiai
+### Ochiai {.unnumbered}
 
-$$d_{Jaccard}=\sqrt{1-\frac{a}{\sqrt{(a+b)(a+c)}}}$$
+$$d_{Ochiai}=\sqrt{1-\frac{a}{\sqrt{(a+b)(a+c)}}}$$
 
-```{r eval=FALSE}
+```{r ochiai, eval=FALSE}
+
 dist_or_ochiai <- dist.binary(phenotype_maladie_s_c, method = 7)
 dist_or_ochiai <- as.data.frame(as.matrix(dist_or_ochiai))
 dist_or_ochiai <- dist_or_ochiai[6103:7064, 1:6102]
 dist_or_ochiai_mx <- as.matrix(dist_or_ochiai)
+
+save(dist_or_ochiai_mx, file="dist_or_ochiai_mx.RData")
+
 ```
 
-## Cosine 
+### Cosine {.unnumbered}
 
-$$d_{cos} = 1 - \frac{a}{\sqrt{(a + b)(a + c)}}$$
+$$d_{Cosine} = 1 - \frac{a}{\sqrt{(a + b)(a + c)}}$$
 
-```{r eval=FALSE}
+```{r cosine,eval=FALSE}
+
 dist_cosine <- dist(phenotype_maladie_s_c, method = "cosine")
 dist_cosine <- as.data.frame(as.matrix(dist_cosine))
 dist_cosine <- dist_cosine[6103:7064, 1:6102]
 dist_cosine_mx <- as.matrix(dist_cosine)
+
+save(dist_cosine_mx, file="dist_cosine_mx.RData")
 ```
 
+## Comparaison des méthodes
+```{r table_comp, echo=FALSE}
 
+# Créer un tableau avec des données
+tableau <- data.frame(
+  Méthode = c("Jaccard", "SMC", "Sokal et Sneath", "Rogers et Tanimoto", "Sorensen", "Hamann", "Ochiai", "Cosine"),
+  Description = c("Calcule la similarité en fonction de la proportion d'éléments communs.",
+                  "Calcule la proportion de concordances parmi tous les éléments.",
+                  "Variation de la distance de Jaccard qui prend en compte les concordances des absences.",
+                  "Mesure la similarité en prenant en compte les présences et les absences.",
+                  "Similaire au Jaccard mais avec un facteur multiplicatif pour augmenter la pondération des présences communes.",
+                  "Mesure qui prend en compte à la fois la présence et l’absence en équilibrant les deux.",
+                  "Mesure la similarité en fonction du rapport entre la taille des ensembles et des éléments communs.",
+                  "Compare deux ensembles comme des vecteurs dans un espace multidimensionnel."),
+  Pertinence = c("Bien adapté pour des données où l'absence est fréquente et où seules les présences sont d'intérêt.",
+                 "Convient pour des ensembles où la présence et l'absence sont toutes deux significatives.",
+                 "Pertinente pour des données binaires où les absences sont aussi importantes que les présences.",
+                 "Adaptée lorsque les absences sont importantes et qu’on veut différencier les éléments présents et absents.",
+                 "Utilisée lorsqu’on souhaite plus de poids pour les éléments présents, ce qui est pertinent dans certains jeux de données.",
+                 "Utile pour des données où l’absence et la présence sont toutes deux importantes et où l’équilibre est nécessaire.",
+                 "Adaptée aux données binaires où l’on veut une mesure de similarité robuste, même pour les ensembles de taille inégale.",
+                 "Très adaptée aux données creuses où les ensembles peuvent être représentés comme des vecteurs binaires."),
+  Avantages = c("Simple à calculer et interpréter. Bien adapté pour les données creuses.",
+                "Prend en compte les absences et les présences.",
+                "Bien équilibré entre présence et absence.",
+                "Permet une comparaison nuancée, plus détaillée que le Jaccard.",
+                "Facile à calculer, adaptée pour les données avec une dominance de présence.",
+                "Robuste et équilibrée entre présence et absence.",
+                "Bien adaptée aux données binaires déséquilibrées, calcul rapide.",
+                "Prend bien en compte la direction des vecteurs, souvent utilisé dans des contextes avec des données creuses."),
+  Inconvénients = c("Ne prend pas en compte les absences simultanées.",
+                   "Peut accorder trop de poids aux absences, ce qui n'est pas toujours pertinent.",
+                   "Plus complexe à interpréter que le Jaccard.",
+                   "Moins robuste si les absences sont trop fréquentes.",
+                   "Ne prend pas bien en compte les absences, moins efficace pour des données très creuses.",
+                   "Plus difficile à interpréter et peut être moins intuitive dans des jeux de données simples.",
+                   "Moins efficace avec des ensembles ayant de nombreuses absences simultanées.",
+                   "Peut ne pas être adaptée aux ensembles avec des distributions très inégales des présences et absences.")
+)
 
+# Afficher le tableau avec kable pour HTML
+kable(tableau, caption = "Comparaison des méthodes de distance", format = "html", table.attr = "class='table table-bordered'")
+```
