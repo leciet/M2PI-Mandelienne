@@ -1561,9 +1561,8 @@ require(smacof)
 require(Matrix)
 require(proxy)
 require(pheatmap)
-if (!require(&quot;ontologyIndex&quot;)) install.packages(&quot;ontologyIndex&quot;, repos = &quot;http://cran.us.r-project.org&quot;)
-library(ontologyIndex)
-library(knitr)</code></pre>
+require(ontologyIndex)
+require(knitr)</code></pre>
 </div>
 </div>
 <div id="préparation-des-données" class="section level1" number="2">
@@ -1763,6 +1762,8 @@ absents dans les deux maladies</li>
 des distances</h2>
 <div id="jaccard" class="section level3 unnumbered">
 <h3 class="unnumbered">Jaccard</h3>
+<p>Calcule la similarité en fonction de la proportion d’éléments
+communs.</p>
 <p><span class="math display">\[d_{Jaccard}=\sqrt{1-\frac{a}{a+b+c}}\]</span></p>
 <pre class="r"><code>index_ASCVD &lt;- which(rownames(phenotype_maladie_s_c) == &quot;ASCVD&quot;)
 rownames(phenotype_maladie_s_c[6103,])
@@ -1775,38 +1776,10 @@ dist_or_jaccard_mx &lt;- as.matrix(dist_or_jaccard)
 
 save(dist_or_jaccard_mx, file=&quot;dist_or_jaccard_mx.RData&quot;)</code></pre>
 </div>
-<div id="smc" class="section level3 unnumbered">
-<h3 class="unnumbered">SMC</h3>
-<p><span class="math display">\[d_{SMC}=\sqrt{1-\frac{a+d}{a+b+c+d}}\]</span></p>
-<pre class="r"><code>dist_or_sokal_michener &lt;- dist.binary(phenotype_maladie_s_c, method = 2)
-dist_or_sokal_michener &lt;- as.data.frame(as.matrix(dist_or_sokal_michener))
-dist_or_sokal_michener &lt;- dist_or_sokal_michener[6103:7064, 1:6102]
-dist_or_sokal_michener_mx &lt;- as.matrix(dist_or_sokal_michener)
-
-save(dist_or_sokal_michener_mx, file=&quot;dist_or_sokal_michener_mx.RData&quot;)</code></pre>
-</div>
-<div id="sokal-et-sneath" class="section level3 unnumbered">
-<h3 class="unnumbered">Sokal et sneath</h3>
-<p><span class="math display">\[d_{Sokal-Sneath}=\sqrt{1-\frac{a}{a+2(b+c)}}\]</span></p>
-<pre class="r"><code>dist_or_sokal_sneath &lt;- dist.binary(phenotype_maladie_s_c, method = 3) 
-dist_or_sokal_sneath &lt;- as.data.frame(as.matrix(dist_or_sokal_sneath))
-dist_or_sokal_sneath &lt;- dist_or_sokal_sneath[6103:7064, 1:6102]
-dist_or_sokal_sneath_mx &lt;- as.matrix(dist_or_sokal_sneath)
-
-save(dist_or_sokal_sneath_mx, file=&quot;dist_or_sokal_sneath_mx.RData&quot;)</code></pre>
-</div>
-<div id="rogers-et-tanimoto" class="section level3 unnumbered">
-<h3 class="unnumbered">Rogers et Tanimoto</h3>
-<p><span class="math display">\[d_{Rogers-Tanimoto}=\sqrt{1-\frac{a+d}{a+2(b+c)+d}}\]</span></p>
-<pre class="r"><code>dist_or_rogers_tanimoto  &lt;- dist.binary(phenotype_maladie_s_c, method = 4)
-dist_or_rogers_tanimoto &lt;- as.data.frame(as.matrix(dist_or_rogers_tanimoto))
-dist_or_rogers_tanimoto &lt;- dist_or_rogers_tanimoto[6103:7064, 1:6102]
-dist_or_rogers_tanimoto_mx &lt;- as.matrix(dist_or_rogers_tanimoto)
-
-save(dist_or_rogers_tanimoto_mx, file=&quot;dist_or_rogers_tanimoto_mx.RData&quot;)</code></pre>
-</div>
 <div id="sorensen" class="section level3 unnumbered">
 <h3 class="unnumbered">Sorensen</h3>
+<p>Similaire à la distance de Jaccard mais avec un facteur multiplicatif
+pour augmenter la pondération des présences communes.</p>
 <p><span class="math display">\[d_{Sorensen}=\sqrt{1-\frac{2a}{2a+b+c}}\]</span></p>
 <pre class="r"><code>dist_or_sorensen &lt;- dist.binary(phenotype_maladie_s_c, method = 5)
 dist_or_sorensen &lt;- as.data.frame(as.matrix(dist_or_sorensen))
@@ -1815,18 +1788,22 @@ dist_or_sorensen_mx &lt;- as.matrix(dist_or_sorensen)
 
 save(dist_or_sorensen_mx, file=&quot;dist_or_sorensen_mx.RData&quot;)</code></pre>
 </div>
-<div id="hamann" class="section level3 unnumbered">
-<h3 class="unnumbered">Hamann</h3>
-<p><span class="math display">\[d_{Hamann}=\sqrt{1-\frac{a-(b+c)+d}{a+b+c+d}}\]</span></p>
-<pre class="r"><code>dist_or_hamann &lt;- dist.binary(phenotype_maladie_s_c, method = 6) 
-dist_or_hamann &lt;- as.data.frame(as.matrix(dist_or_hamann))
-dist_or_hamann &lt;- dist_or_hamann[6103:7064, 1:6102]
-dist_or_hamann_mx &lt;- as.matrix(dist_or_hamann)
+<div id="sokal-et-sneath" class="section level3 unnumbered">
+<h3 class="unnumbered">Sokal et sneath</h3>
+<p>Variation de la distance de Jaccard qui prend en compte les
+concordances des absences.</p>
+<p><span class="math display">\[d_{Sokal-Sneath}=\sqrt{1-\frac{a}{a+2(b+c)}}\]</span></p>
+<pre class="r"><code>dist_or_sokal_sneath &lt;- dist.binary(phenotype_maladie_s_c, method = 3) 
+dist_or_sokal_sneath &lt;- as.data.frame(as.matrix(dist_or_sokal_sneath))
+dist_or_sokal_sneath &lt;- dist_or_sokal_sneath[6103:7064, 1:6102]
+dist_or_sokal_sneath_mx &lt;- as.matrix(dist_or_sokal_sneath)
 
-save(dist_or_hamann_mx, file=&quot;dist_or_hamann_mx.RData&quot;)</code></pre>
+save(dist_or_sokal_sneath_mx, file=&quot;dist_or_sokal_sneath_mx.RData&quot;)</code></pre>
 </div>
 <div id="ochiai" class="section level3 unnumbered">
 <h3 class="unnumbered">Ochiai</h3>
+<p>Mesure la similarité en fonction du rapport entre la taille des
+ensembles et des éléments communs.</p>
 <p><span class="math display">\[d_{Ochiai}=\sqrt{1-\frac{a}{\sqrt{(a+b)(a+c)}}}\]</span></p>
 <pre class="r"><code>dist_or_ochiai &lt;- dist.binary(phenotype_maladie_s_c, method = 7)
 dist_or_ochiai &lt;- as.data.frame(as.matrix(dist_or_ochiai))
@@ -1837,6 +1814,8 @@ save(dist_or_ochiai_mx, file=&quot;dist_or_ochiai_mx.RData&quot;)</code></pre>
 </div>
 <div id="cosine" class="section level3 unnumbered">
 <h3 class="unnumbered">Cosine</h3>
+<p>Similaire à Ochiai pour des données continues. Compare deux ensembles
+comme des vecteurs dans un espace multidimensionnel.</p>
 <p><span class="math display">\[d_{Cosine} = 1 - \frac{a}{\sqrt{(a +
 b)(a + c)}}\]</span></p>
 <pre class="r"><code>dist_cosine &lt;- dist(phenotype_maladie_s_c, method = &quot;cosine&quot;)
@@ -1845,6 +1824,42 @@ dist_cosine &lt;- dist_cosine[6103:7064, 1:6102]
 dist_or_cosine_mx &lt;- as.matrix(dist_cosine)
 
 save(dist_or_cosine_mx, file=&quot;dist_or_cosine_mx.RData&quot;)</code></pre>
+</div>
+<div id="rogers-et-tanimoto" class="section level3 unnumbered">
+<h3 class="unnumbered">Rogers et Tanimoto</h3>
+<p>Mesure la similarité en prenant en compte les présences et les
+absences.</p>
+<p><span class="math display">\[d_{Rogers-Tanimoto}=\sqrt{1-\frac{a+d}{a+2(b+c)+d}}\]</span></p>
+<pre class="r"><code>dist_or_rogers_tanimoto  &lt;- dist.binary(phenotype_maladie_s_c, method = 4)
+dist_or_rogers_tanimoto &lt;- as.data.frame(as.matrix(dist_or_rogers_tanimoto))
+dist_or_rogers_tanimoto &lt;- dist_or_rogers_tanimoto[6103:7064, 1:6102]
+dist_or_rogers_tanimoto_mx &lt;- as.matrix(dist_or_rogers_tanimoto)
+
+save(dist_or_rogers_tanimoto_mx, file=&quot;dist_or_rogers_tanimoto_mx.RData&quot;)</code></pre>
+</div>
+<div id="hamann" class="section level3 unnumbered">
+<h3 class="unnumbered">Hamann</h3>
+<p>Mesure qui prend en compte à la fois la présence et l’absence en
+équilibrant les deux.</p>
+<p><span class="math display">\[d_{Hamann}=\sqrt{1-\frac{a-(b+c)+d}{a+b+c+d}}\]</span></p>
+<pre class="r"><code>dist_or_hamann &lt;- dist.binary(phenotype_maladie_s_c, method = 6) 
+dist_or_hamann &lt;- as.data.frame(as.matrix(dist_or_hamann))
+dist_or_hamann &lt;- dist_or_hamann[6103:7064, 1:6102]
+dist_or_hamann_mx &lt;- as.matrix(dist_or_hamann)
+
+save(dist_or_hamann_mx, file=&quot;dist_or_hamann_mx.RData&quot;)</code></pre>
+</div>
+<div id="smc" class="section level3 unnumbered">
+<h3 class="unnumbered">SMC</h3>
+<p>Le Simple Matching Coefficient (SMC), ou indice de Sokal et Michener,
+calcule la proportion de concordances parmi tous les éléments.</p>
+<p><span class="math display">\[d_{SMC}=\sqrt{1-\frac{a+d}{a+b+c+d}}\]</span></p>
+<pre class="r"><code>dist_or_sokal_michener &lt;- dist.binary(phenotype_maladie_s_c, method = 2)
+dist_or_sokal_michener &lt;- as.data.frame(as.matrix(dist_or_sokal_michener))
+dist_or_sokal_michener &lt;- dist_or_sokal_michener[6103:7064, 1:6102]
+dist_or_sokal_michener_mx &lt;- as.matrix(dist_or_sokal_michener)
+
+save(dist_or_sokal_michener_mx, file=&quot;dist_or_sokal_michener_mx.RData&quot;)</code></pre>
 </div>
 </div>
 <div id="comparaison-des-méthodes" class="section level2" number="3.2">
@@ -1858,9 +1873,6 @@ Comparaison des méthodes de distance
 <tr>
 <th style="text-align:left;">
 Méthode
-</th>
-<th style="text-align:left;">
-Description
 </th>
 <th style="text-align:left;">
 Pertinence
@@ -1879,9 +1891,6 @@ Inconvénients
 Jaccard
 </td>
 <td style="text-align:left;">
-Calcule la similarité en fonction de la proportion d’éléments communs.
-</td>
-<td style="text-align:left;">
 Bien adapté pour des données où l’absence est fréquente et où seules les
 présences sont d’intérêt.
 </td>
@@ -1894,67 +1903,7 @@ Ne prend pas en compte les absences simultanées.
 </tr>
 <tr>
 <td style="text-align:left;">
-SMC
-</td>
-<td style="text-align:left;">
-Calcule la proportion de concordances parmi tous les éléments.
-</td>
-<td style="text-align:left;">
-Convient pour des ensembles où la présence et l’absence sont toutes deux
-significatives.
-</td>
-<td style="text-align:left;">
-Prend en compte les absences et les présences.
-</td>
-<td style="text-align:left;">
-Peut accorder trop de poids aux absences, ce qui n’est pas toujours
-pertinent.
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sokal et Sneath
-</td>
-<td style="text-align:left;">
-Variation de la distance de Jaccard qui prend en compte les concordances
-des absences.
-</td>
-<td style="text-align:left;">
-Pertinente pour des données binaires où les absences sont aussi
-importantes que les présences.
-</td>
-<td style="text-align:left;">
-Bien équilibré entre présence et absence.
-</td>
-<td style="text-align:left;">
-Plus complexe à interpréter que le Jaccard.
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Rogers et Tanimoto
-</td>
-<td style="text-align:left;">
-Mesure la similarité en prenant en compte les présences et les absences.
-</td>
-<td style="text-align:left;">
-Adaptée lorsque les absences sont importantes et qu’on veut différencier
-les éléments présents et absents.
-</td>
-<td style="text-align:left;">
-Permet une comparaison nuancée, plus détaillée que le Jaccard.
-</td>
-<td style="text-align:left;">
-Moins robuste si les absences sont trop fréquentes.
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
 Sorensen
-</td>
-<td style="text-align:left;">
-Similaire au Jaccard mais avec un facteur multiplicatif pour augmenter
-la pondération des présences communes.
 </td>
 <td style="text-align:left;">
 Utilisée lorsqu’on souhaite plus de poids pour les éléments présents, ce
@@ -1971,31 +1920,22 @@ données très creuses.
 </tr>
 <tr>
 <td style="text-align:left;">
-Hamann
+Sokal et Sneath
 </td>
 <td style="text-align:left;">
-Mesure qui prend en compte à la fois la présence et l’absence en
-équilibrant les deux.
+Pertinente pour des données binaires où les absences sont aussi
+importantes que les présences.
 </td>
 <td style="text-align:left;">
-Utile pour des données où l’absence et la présence sont toutes deux
-importantes et où l’équilibre est nécessaire.
+Bien équilibré entre présence et absence.
 </td>
 <td style="text-align:left;">
-Robuste et équilibrée entre présence et absence.
-</td>
-<td style="text-align:left;">
-Plus difficile à interpréter et peut être moins intuitive dans des jeux
-de données simples.
+Plus complexe à interpréter que le Jaccard.
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
 Ochiai
-</td>
-<td style="text-align:left;">
-Mesure la similarité en fonction du rapport entre la taille des
-ensembles et des éléments communs.
 </td>
 <td style="text-align:left;">
 Adaptée aux données binaires où l’on veut une mesure de similarité
@@ -2014,10 +1954,6 @@ simultanées.
 Cosine
 </td>
 <td style="text-align:left;">
-Compare deux ensembles comme des vecteurs dans un espace
-multidimensionnel.
-</td>
-<td style="text-align:left;">
 Très adaptée aux données creuses où les ensembles peuvent être
 représentés comme des vecteurs binaires.
 </td>
@@ -2030,10 +1966,57 @@ Peut ne pas être adaptée aux ensembles avec des distributions très
 inégales des présences et absences.
 </td>
 </tr>
+<tr>
+<td style="text-align:left;">
+Rogers et Tanimoto
+</td>
+<td style="text-align:left;">
+Adaptée lorsque les absences sont importantes et qu’on veut différencier
+les éléments présents et absents.
+</td>
+<td style="text-align:left;">
+Permet une comparaison nuancée, plus détaillée que le Jaccard.
+</td>
+<td style="text-align:left;">
+Moins robuste si les absences sont trop fréquentes.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Hamann
+</td>
+<td style="text-align:left;">
+Utile pour des données où l’absence et la présence sont toutes deux
+importantes et où l’équilibre est nécessaire.
+</td>
+<td style="text-align:left;">
+Robuste et équilibrée entre présence et absence.
+</td>
+<td style="text-align:left;">
+Plus difficile à interpréter et peut être moins intuitive dans des jeux
+de données simples.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SMC
+</td>
+<td style="text-align:left;">
+Convient pour des ensembles où la présence et l’absence sont toutes deux
+significatives.
+</td>
+<td style="text-align:left;">
+Prend en compte les absences et les présences.
+</td>
+<td style="text-align:left;">
+Peut accorder trop de poids aux absences, ce qui n’est pas toujours
+pertinent.
+</td>
+</tr>
 </tbody>
 </table>
 <div id="chargement_distances" style="text-align:justify">
-<p>Les calculs de distance étant assez longs, nous avons sauvegarder les
+<p>Les calculs de distance étant assez longs, nous avons sauvegardé les
 matrices dans des objets RData. Le code suivant permet de charger les
 matrices dans notre environnement</p>
 </div>

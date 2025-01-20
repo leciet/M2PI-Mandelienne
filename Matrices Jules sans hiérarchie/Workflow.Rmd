@@ -60,9 +60,9 @@ require(smacof)
 require(Matrix)
 require(proxy)
 require(pheatmap)
-if (!require("ontologyIndex")) install.packages("ontologyIndex", repos = "http://cran.us.r-project.org")
-library(ontologyIndex)
-library(knitr)
+require(ontologyIndex)
+require(knitr)
+
 ```
 
 # Préparation des données
@@ -241,6 +241,8 @@ Ici on cherche à caluler des distances binaires, c'est-à-dire des distances su
 
 ### Jaccard {.unnumbered}
 
+Calcule la similarité en fonction de la proportion d'éléments communs.
+
 $$d_{Jaccard}=\sqrt{1-\frac{a}{a+b+c}}$$
 
 ```{r jaccard, eval=FALSE}
@@ -258,52 +260,9 @@ save(dist_or_jaccard_mx, file="dist_or_jaccard_mx.RData")
 
 ```
 
-### SMC {.unnumbered}
-
-$$d_{SMC}=\sqrt{1-\frac{a+d}{a+b+c+d}}$$
-
-```{r smc,eval=FALSE}
-
-dist_or_sokal_michener <- dist.binary(phenotype_maladie_s_c, method = 2)
-dist_or_sokal_michener <- as.data.frame(as.matrix(dist_or_sokal_michener))
-dist_or_sokal_michener <- dist_or_sokal_michener[6103:7064, 1:6102]
-dist_or_sokal_michener_mx <- as.matrix(dist_or_sokal_michener)
-
-save(dist_or_sokal_michener_mx, file="dist_or_sokal_michener_mx.RData")
-
-```
-
-### Sokal et sneath {.unnumbered}
-
-$$d_{Sokal-Sneath}=\sqrt{1-\frac{a}{a+2(b+c)}}$$
-
-```{r sokal-sneath,eval=FALSE}
-
-dist_or_sokal_sneath <- dist.binary(phenotype_maladie_s_c, method = 3) 
-dist_or_sokal_sneath <- as.data.frame(as.matrix(dist_or_sokal_sneath))
-dist_or_sokal_sneath <- dist_or_sokal_sneath[6103:7064, 1:6102]
-dist_or_sokal_sneath_mx <- as.matrix(dist_or_sokal_sneath)
-
-save(dist_or_sokal_sneath_mx, file="dist_or_sokal_sneath_mx.RData")
-
-```
-
-### Rogers et Tanimoto {.unnumbered}
-
-$$d_{Rogers-Tanimoto}=\sqrt{1-\frac{a+d}{a+2(b+c)+d}}$$
-
-```{r rogers-tanimoto,eval=FALSE}
-
-dist_or_rogers_tanimoto  <- dist.binary(phenotype_maladie_s_c, method = 4)
-dist_or_rogers_tanimoto <- as.data.frame(as.matrix(dist_or_rogers_tanimoto))
-dist_or_rogers_tanimoto <- dist_or_rogers_tanimoto[6103:7064, 1:6102]
-dist_or_rogers_tanimoto_mx <- as.matrix(dist_or_rogers_tanimoto)
-
-save(dist_or_rogers_tanimoto_mx, file="dist_or_rogers_tanimoto_mx.RData")
-
-```
-
 ### Sorensen {.unnumbered}
+
+Similaire à la distance de Jaccard mais avec un facteur multiplicatif pour augmenter la pondération des présences communes.
 
 $$d_{Sorensen}=\sqrt{1-\frac{2a}{2a+b+c}}$$
 
@@ -318,22 +277,27 @@ save(dist_or_sorensen_mx, file="dist_or_sorensen_mx.RData")
 
 ```
 
-### Hamann {.unnumbered}
 
-$$d_{Hamann}=\sqrt{1-\frac{a-(b+c)+d}{a+b+c+d}}$$
+### Sokal et sneath {.unnumbered}
 
-```{r hamann,eval=FALSE}
+Variation de la distance de Jaccard qui prend en compte les concordances des absences.
 
-dist_or_hamann <- dist.binary(phenotype_maladie_s_c, method = 6) 
-dist_or_hamann <- as.data.frame(as.matrix(dist_or_hamann))
-dist_or_hamann <- dist_or_hamann[6103:7064, 1:6102]
-dist_or_hamann_mx <- as.matrix(dist_or_hamann)
+$$d_{Sokal-Sneath}=\sqrt{1-\frac{a}{a+2(b+c)}}$$
 
-save(dist_or_hamann_mx, file="dist_or_hamann_mx.RData")
+```{r sokal-sneath,eval=FALSE}
+
+dist_or_sokal_sneath <- dist.binary(phenotype_maladie_s_c, method = 3) 
+dist_or_sokal_sneath <- as.data.frame(as.matrix(dist_or_sokal_sneath))
+dist_or_sokal_sneath <- dist_or_sokal_sneath[6103:7064, 1:6102]
+dist_or_sokal_sneath_mx <- as.matrix(dist_or_sokal_sneath)
+
+save(dist_or_sokal_sneath_mx, file="dist_or_sokal_sneath_mx.RData")
 
 ```
 
 ### Ochiai {.unnumbered}
+
+Mesure la similarité en fonction du rapport entre la taille des ensembles et des éléments communs.
 
 $$d_{Ochiai}=\sqrt{1-\frac{a}{\sqrt{(a+b)(a+c)}}}$$
 
@@ -350,6 +314,8 @@ save(dist_or_ochiai_mx, file="dist_or_ochiai_mx.RData")
 
 ### Cosine {.unnumbered}
 
+Similaire à Ochiai pour des données continues. Compare deux ensembles comme des vecteurs dans un espace multidimensionnel.
+
 $$d_{Cosine} = 1 - \frac{a}{\sqrt{(a + b)(a + c)}}$$
 
 ```{r cosine, eval=FALSE}
@@ -362,45 +328,93 @@ dist_or_cosine_mx <- as.matrix(dist_cosine)
 save(dist_or_cosine_mx, file="dist_or_cosine_mx.RData")
 ```
 
+### Rogers et Tanimoto {.unnumbered}
+
+Mesure la similarité en prenant en compte les présences et les absences.
+
+$$d_{Rogers-Tanimoto}=\sqrt{1-\frac{a+d}{a+2(b+c)+d}}$$
+
+```{r rogers-tanimoto,eval=FALSE}
+
+dist_or_rogers_tanimoto  <- dist.binary(phenotype_maladie_s_c, method = 4)
+dist_or_rogers_tanimoto <- as.data.frame(as.matrix(dist_or_rogers_tanimoto))
+dist_or_rogers_tanimoto <- dist_or_rogers_tanimoto[6103:7064, 1:6102]
+dist_or_rogers_tanimoto_mx <- as.matrix(dist_or_rogers_tanimoto)
+
+save(dist_or_rogers_tanimoto_mx, file="dist_or_rogers_tanimoto_mx.RData")
+
+```
+
+### Hamann {.unnumbered}
+
+Mesure qui prend en compte à la fois la présence et l’absence en équilibrant les deux.
+
+$$d_{Hamann}=\sqrt{1-\frac{a-(b+c)+d}{a+b+c+d}}$$
+
+```{r hamann,eval=FALSE}
+
+dist_or_hamann <- dist.binary(phenotype_maladie_s_c, method = 6) 
+dist_or_hamann <- as.data.frame(as.matrix(dist_or_hamann))
+dist_or_hamann <- dist_or_hamann[6103:7064, 1:6102]
+dist_or_hamann_mx <- as.matrix(dist_or_hamann)
+
+save(dist_or_hamann_mx, file="dist_or_hamann_mx.RData")
+
+```
+
+
+### SMC {.unnumbered}
+
+Le Simple Matching Coefficient (SMC), ou indice de Sokal et Michener, calcule la proportion de concordances parmi tous les éléments.
+
+$$d_{SMC}=\sqrt{1-\frac{a+d}{a+b+c+d}}$$
+
+```{r smc,eval=FALSE}
+
+dist_or_sokal_michener <- dist.binary(phenotype_maladie_s_c, method = 2)
+dist_or_sokal_michener <- as.data.frame(as.matrix(dist_or_sokal_michener))
+dist_or_sokal_michener <- dist_or_sokal_michener[6103:7064, 1:6102]
+dist_or_sokal_michener_mx <- as.matrix(dist_or_sokal_michener)
+
+save(dist_or_sokal_michener_mx, file="dist_or_sokal_michener_mx.RData")
+
+```
+
+
 ## Comparaison des méthodes
 
 ```{r table_comp, echo=FALSE}
 
 # Créer un tableau avec des données
 tableau <- data.frame(
-  Méthode = c("Jaccard", "SMC", "Sokal et Sneath", "Rogers et Tanimoto", "Sorensen", "Hamann", "Ochiai", "Cosine"),
-  Description = c("Calcule la similarité en fonction de la proportion d'éléments communs.",
-                  "Calcule la proportion de concordances parmi tous les éléments.",
-                  "Variation de la distance de Jaccard qui prend en compte les concordances des absences.",
-                  "Mesure la similarité en prenant en compte les présences et les absences.",
-                  "Similaire au Jaccard mais avec un facteur multiplicatif pour augmenter la pondération des présences communes.",
-                  "Mesure qui prend en compte à la fois la présence et l’absence en équilibrant les deux.",
-                  "Mesure la similarité en fonction du rapport entre la taille des ensembles et des éléments communs.",
-                  "Compare deux ensembles comme des vecteurs dans un espace multidimensionnel."),
+  Méthode = c("Jaccard","Sorensen", "Sokal et Sneath", "Ochiai",  "Cosine", "Rogers et Tanimoto", "Hamann", "SMC" ),
   Pertinence = c("Bien adapté pour des données où l'absence est fréquente et où seules les présences sont d'intérêt.",
-                 "Convient pour des ensembles où la présence et l'absence sont toutes deux significatives.",
-                 "Pertinente pour des données binaires où les absences sont aussi importantes que les présences.",
-                 "Adaptée lorsque les absences sont importantes et qu’on veut différencier les éléments présents et absents.",
                  "Utilisée lorsqu’on souhaite plus de poids pour les éléments présents, ce qui est pertinent dans certains jeux de données.",
-                 "Utile pour des données où l’absence et la présence sont toutes deux importantes et où l’équilibre est nécessaire.",
+                 "Pertinente pour des données binaires où les absences sont aussi importantes que les présences.",
                  "Adaptée aux données binaires où l’on veut une mesure de similarité robuste, même pour les ensembles de taille inégale.",
-                 "Très adaptée aux données creuses où les ensembles peuvent être représentés comme des vecteurs binaires."),
+                 "Très adaptée aux données creuses où les ensembles peuvent être représentés comme des vecteurs binaires.",
+                 "Adaptée lorsque les absences sont importantes et qu’on veut différencier les éléments présents et absents.",
+                 "Utile pour des données où l’absence et la présence sont toutes deux importantes et où l’équilibre est nécessaire.",
+                 "Convient pour des ensembles où la présence et l'absence sont toutes deux significatives."
+                 ),
   Avantages = c("Simple à calculer et interpréter. Bien adapté pour les données creuses.",
-                "Prend en compte les absences et les présences.",
-                "Bien équilibré entre présence et absence.",
-                "Permet une comparaison nuancée, plus détaillée que le Jaccard.",
                 "Facile à calculer, adaptée pour les données avec une dominance de présence.",
-                "Robuste et équilibrée entre présence et absence.",
+                "Bien équilibré entre présence et absence.",
                 "Bien adaptée aux données binaires déséquilibrées, calcul rapide.",
-                "Prend bien en compte la direction des vecteurs, souvent utilisé dans des contextes avec des données creuses."),
-  Inconvénients = c("Ne prend pas en compte les absences simultanées.",
-                   "Peut accorder trop de poids aux absences, ce qui n'est pas toujours pertinent.",
-                   "Plus complexe à interpréter que le Jaccard.",
-                   "Moins robuste si les absences sont trop fréquentes.",
-                   "Ne prend pas bien en compte les absences, moins efficace pour des données très creuses.",
-                   "Plus difficile à interpréter et peut être moins intuitive dans des jeux de données simples.",
-                   "Moins efficace avec des ensembles ayant de nombreuses absences simultanées.",
-                   "Peut ne pas être adaptée aux ensembles avec des distributions très inégales des présences et absences.")
+                "Prend bien en compte la direction des vecteurs, souvent utilisé dans des contextes avec des données creuses.",
+                "Permet une comparaison nuancée, plus détaillée que le Jaccard.",
+                "Robuste et équilibrée entre présence et absence.",
+                "Prend en compte les absences et les présences."
+                ),
+  Inconvénients = c("Ne prend pas en compte les absences simultanées.", 
+                    "Ne prend pas bien en compte les absences, moins efficace pour des données très creuses.",
+                    "Plus complexe à interpréter que le Jaccard.",
+                    "Moins efficace avec des ensembles ayant de nombreuses absences simultanées.",
+                    "Peut ne pas être adaptée aux ensembles avec des distributions très inégales des présences et absences.",
+                    "Moins robuste si les absences sont trop fréquentes.", 
+                    "Plus difficile à interpréter et peut être moins intuitive dans des jeux de données simples.",
+                   "Peut accorder trop de poids aux absences, ce qui n'est pas toujours pertinent."
+                   )
 )
 
 # Afficher le tableau avec kable pour HTML
@@ -408,7 +422,7 @@ kable(tableau, caption = "Comparaison des méthodes de distance", format = "html
 ```
 
 ::: {#chargement_distances style="text-align:justify"}
-Les calculs de distance étant assez longs, nous avons sauvegarder les matrices dans des objets RData. Le code suivant permet de charger les matrices dans notre environnement
+Les calculs de distance étant assez longs, nous avons sauvegardé les matrices dans des objets RData. Le code suivant permet de charger les matrices dans notre environnement
 :::
 
 ```{r load_distance}
