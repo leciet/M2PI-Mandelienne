@@ -673,7 +673,7 @@ save(data_classif_sokal_michener, file="data_classif_sokal_michener.RData")
 save(data_classif_rogers_tanimoto, file="data_classif_rogers_tanimoto.RData")
 save(data_classif_hamann, file="data_classif_hamann.RData")
 save(data_classif_cosine, file="data_classif_cosine.RData")
-
+#
 load("data_classif_sorensen.RData")
 load("data_classif_ochiai.RData")
 load("data_classif_jaccard.RData")
