@@ -29,3 +29,14 @@ Matrices Jules sans hiérarchie/phenotype_maladie_s_c (1).RData
 Matrices Jules sans hiérarchie/res.mfa.toutes.distances.RData
 Matrices Jules sans hiérarchie/results_all_distances.RData
 Matrices Jules sans hiérarchie/silhouette_sorensen.RData
+Matrices Jules sans hiérarchie/hc_acm.RData
+Matrices Jules sans hiérarchie/hc_cosine.RData
+Matrices Jules sans hiérarchie/hc_embedding.RData
+Matrices Jules sans hiérarchie/hc_hamann.RData
+Matrices Jules sans hiérarchie/hc_jaccard.RData
+Matrices Jules sans hiérarchie/hc_ochiai.RData
+Matrices Jules sans hiérarchie/hc_ot_jaccard.RData
+Matrices Jules sans hiérarchie/hc_rogers_tanimoto.RData
+Matrices Jules sans hiérarchie/hc_sokal_michener.RData
+Matrices Jules sans hiérarchie/hc_sokal_sneath.RData
+Matrices Jules sans hiérarchie/hc_sorensen.RData

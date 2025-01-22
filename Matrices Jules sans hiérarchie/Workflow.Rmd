@@ -38,6 +38,8 @@ Nous partons des hypothèses suivantes :
 -   Il est possible de comprendre les maladies complexes en les rapprochant de maladies simples similaires.
 
 -   Nous négligeons l’épistasie (interaction complexe entre l'expression de plusieurs gènes).
+
+-   Les phénotypes ne sont pas hiérarchisés. Nous partons du postulat que seul le niveau phénotypique le plus fin est présent dans le jeu de données.
 :::
 
 ## Démarche
@@ -65,6 +67,7 @@ Les packages suivants sont utilisés dans ce workflow. Il est également nécess
 ```{r import_packages, message=FALSE, warning=FALSE}
 
 require(ade4)
+require(cluster)
 require(DataExplorer)
 require(factoextra)
 require(FactoMineR)
@@ -771,7 +774,13 @@ custom_colors <- c(
    
 )
 
-plot.MFA(res.mfa.toutes.distances,choix = 'group',palette = custom_colors)
+name.group = c("ACM", "Sorensen", "Ochiai", "Jaccard", "Jaccard_OT", "Embedding", "sokal_sneath", "sokal_michener",  "rogers_tanimoto", "Hamann", "Cosine")
+
+
+fviz_mfa_var(res.mfa.toutes.distances,
+                     choice = 'group',
+                     geom = c("point", "text"),
+                     repel = TRUE)
 
 fviz_mfa_axes(res.mfa.toutes.distances,
          geom = c('arrow','text'),
@@ -960,11 +969,13 @@ load("association_matrices.RData")
 
 :::{#intro_classif style="text-align:justify"}
 
-Une autre méthode afin d'obtenir une matrice d'assignation est de passer par une classification. 
+Une autre méthode afin d'obtenir une matrice d'assignation est de passer par une classification. Contrairement aux permutations, la classification peut être utilisée pour l'ensemble des méthodes et non seulement pour les matrices de distances. 
 
 :::
 
-```{r classif, eval=FALSE}
+### Préparation des données
+
+```{r prep_classif, eval=FALSE}
 
 row_sorensen = coord_fact_mds_sorensen$conf.row
 row_sorensen <- as.data.frame(row_sorensen)
@@ -1040,7 +1051,8 @@ save(data_classif_cosine, file="data_classif_cosine.RData")
 
 ```
 
-```{r load_classif}
+```{r load_data_classif}
+
 
 load("data_classif_sorensen.RData")
 load("data_classif_ochiai.RData")
@@ -1054,5 +1066,225 @@ load("data_classif_rogers_tanimoto.RData")
 load("data_classif_hamann.RData")
 load("data_classif_cosine.RData")
 
+
 ```
+
+
+### Application de la classification 
+
+:::{#classif style='text-align:justify'}
+
+Nous avons décidé de réaliser une classification à 384 classes, correspondant aux 384 dimensions conservées pour toute les méthodes. Ce choix a été fait car réaliser une classification sur un nombre de classes plus élevés que le nombre de composantes peut s'avérer difficile. 
+
+:::
+
+```{r classif, eval=FALSE}
+
+# Pour sorensen
+hc_sorensen <- HCPC(data_classif_sorensen,
+                    nb.clust = 384)
+save(hc_sorensen, file="hc_sorensen.RData")
+
+# Pour ochiai
+hc_ochiai <- HCPC(data_classif_ochiai,
+                  nb.clust = 384)
+save(hc_ochiai, file="hc_ochiai.RData")
+
+# Pour jaccard
+hc_jaccard <- HCPC(data_classif_jaccard,
+                   nb.clust = 384)
+save(hc_jaccard, file="hc_jaccard.RData")
+
+# Pour ot_jaccard
+hc_ot_jaccard <- HCPC(data_classif_ot_jaccard,
+                      nb.clust = 384)
+save(hc_ot_jaccard, file="hc_ot_jaccard.RData")
+
+# Pour embedding
+hc_embedding <- HCPC(data_classif_embedding,
+                     nb.clust = 384)
+save(hc_embedding, file="hc_embedding.RData")
+
+# Pour acm
+hc_acm <- HCPC(data_classif_acm,
+               nb.clust = 384)
+save(hc_acm, file="hc_acm.RData")
+
+# Pour sokal_sneath
+hc_sokal_sneath <- HCPC(data_classif_sokal_sneath,
+                        nb.clust = 384)
+save(hc_sokal_sneath, file="hc_sokal_sneath.RData")
+
+# Pour sokal_michener
+hc_sokal_michener <- HCPC(data_classif_sokal_michener,
+                          nb.clust = 384)
+save(hc_sokal_michener, file="hc_sokal_michener.RData")
+
+# Pour rogers_tanimoto
+hc_rogers_tanimoto <- HCPC(data_classif_rogers_tanimoto,
+                           nb.clust = 384)
+save(hc_rogers_tanimoto, file="hc_rogers_tanimoto.RData")
+
+# Pour hamann
+hc_hamann <- HCPC(data_classif_hamann,
+                  nb.clust = 384)
+save(hc_hamann, file="hc_hamann.RData")
+
+# Pour cosine
+hc_cosine <- HCPC(data_classif_cosine,
+                  nb.clust = 384)
+save(hc_cosine, file="hc_cosine.RData")
+
+# Création des nouvelles matrices d'assignation à partir du clustering ----
+
+```
+
+```{r load_cluster}
+
+load("hc_sorensen.RData")
+load("hc_ochiai.RData")
+load("hc_jaccard.RData")
+load("hc_ot_jaccard.RData")
+load("hc_embedding.RData")
+load("hc_acm.RData")
+load("hc_sokal_michener.RData")
+load("hc_rogers_tanimoto.RData")
+load("hc_hamann.RData")
+load("hc_cosine.RData")
+
+```
+
+### Transformation 
+
+```{r fonction_transfo_cluster, eval=FALSE}
+
+cluster_sorensen <- hc_sorensen$data.clust
+cluster_ochiai <- hc_ochiai$data.clust
+cluster_jaccard <- hc_jaccard$data.clust
+cluster_ot_jaccard <- hc_ot_jaccard$data.clust
+cluster_embedding <- hc_embedding$data.clust
+cluster_acm <- hc_acm$data.clust
+cluster_sokal_michener <- hc_sokal_michener$data.clust
+cluster_rogers_tanimoto <- hc_rogers_tanimoto$data.clust
+cluster_hamann <- hc_hamann$data.clust
+cluster_cosine <- hc_cosine$data.clust
+
+# Convert clustering results to assignment matrix
+create_assignment_matrix <- function(cluster_data) {
+  # Extract cluster assignments and row names
+  cluster_assignments <- cluster_data[,385]
+  all_names <- rownames(cluster_data)
+  # Extract names of simple diseases (from index 965 to end)
+  ms_names <- all_names[963:length(all_names)]
+  mc_names <- all_names[1:962]
+  # Create empty matrix
+  n_mc <- 962
+  n_ms <- 6102
+  assignment_matrix <- matrix(0, nrow=n_mc, ncol=n_ms)
+  # Fill matrix - 1 if MC and MS are in same cluster
+  for(i in 1:n_mc) {
+    for(j in 1:n_ms) {
+      if(cluster_assignments[i] == cluster_assignments[j+962]) {
+        assignment_matrix[i,j] <- 1
+      }
+    }
+  }
+  # Add row and column names
+  rownames(assignment_matrix) <- mc_names
+  colnames(assignment_matrix) <- ms_names
+  return(assignment_matrix)
+}
+```
+
+```{r transfo_cluster,eval=FALSE}
+
+assignment_matrix_sorensen_classif <- create_assignment_matrix(cluster_sorensen)
+assignment_matrix_sorensen_classif <- as.data.frame(assignment_matrix_sorensen_classif)
+save(assignment_matrix_sorensen_classif, file="assignment_matrix_sorensen_classif.RData")
+
+assignment_matrix_ochiai_classif <- create_assignment_matrix(cluster_ochiai)
+assignment_matrix_ochiai_classif <- as.data.frame(assignment_matrix_ochiai_classif)
+save(assignment_matrix_ochiai_classif, file="assignment_matrix_ochiai_classif.RData")
+
+assignment_matrix_jaccard_classif <- create_assignment_matrix(cluster_jaccard)
+assignment_matrix_jaccard_classif <- as.data.frame(assignment_matrix_jaccard_classif)
+save(assignment_matrix_jaccard_classif, file="assignment_matrix_jaccard_classif.RData")
+
+assignment_matrix_ot_jaccard_classif <- create_assignment_matrix(cluster_ot_jaccard)
+assignment_matrix_ot_jaccard_classif <- as.data.frame(assignment_matrix_ot_jaccard_classif)
+save(assignment_matrix_ot_jaccard_classif, file="assignment_matrix_ot_jaccard_classif.RData")
+
+assignment_matrix_embedding_classif <- create_assignment_matrix(cluster_embedding)
+assignment_matrix_embedding_classif <- as.data.frame(assignment_matrix_embedding_classif)
+save(assignment_matrix_embedding_classif, file="assignment_matrix_embedding_classif.RData")
+
+assignment_matrix_acm_classif <- create_assignment_matrix(cluster_acm)
+assignment_matrix_acm_classif <- as.data.frame(assignment_matrix_acm_classif)
+save(assignment_matrix_acm_classif, file="assignment_matrix_acm_classif.RData")
+
+assignment_matrix_sokal_michener_classif <- create_assignment_matrix(cluster_sokal_michener)
+assignment_matrix_sokal_michener_classif <- as.data.frame(assignment_matrix_sokal_michener_classif)
+save(assignment_matrix_sokal_michener_classif, file="assignment_matrix_sokal_michener_classif.RData")
+
+assignment_matrix_rogers_tanimoto_classif <- create_assignment_matrix(cluster_rogers_tanimoto)
+assignment_matrix_rogers_tanimoto_classif <- as.data.frame(assignment_matrix_rogers_tanimoto_classif)
+save(assignment_matrix_rogers_tanimoto_classif, file="assignment_matrix_rogers_tanimoto_classif.RData")
+
+assignment_matrix_hamann_classif <- create_assignment_matrix(cluster_hamann)
+assignment_matrix_hamann_classif <- as.data.frame(assignment_matrix_hamann_classif)
+save(assignment_matrix_hamann_classif, file="assignment_matrix_hamann_classif.RData")
+
+assignment_matrix_cosine_classif <- create_assignment_matrix(cluster_cosine)
+assignment_matrix_cosine_classif <- as.data.frame(assignment_matrix_cosine_classif)
+save(assignment_matrix_cosine_classif, file="assignment_matrix_cosine_classif.RData")
+
+```
+
+```{r load_transfo_cluster}
+
+load("assignment_matrix_sorensen_classif.RData")
+# load("assignment_matrix_ochiai_classif.RData")
+load("assignment_matrix_jaccard_classif.RData")
+load("assignment_matrix_ot_jaccard_classif.RData")
+load("assignment_matrix_embedding_classif.RData")
+load("assignment_matrix_acm_classif.RData")
+load("assignment_matrix_sokal_michener_classif.RData")
+load("assignment_matrix_rogers_tanimoto_classif.RData")
+load("assignment_matrix_hamann_classif.RData")
+load("assignment_matrix_cosine_classif.RData")
+
+rownames(assignment_matrix_sorensen_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
+colnames(assignment_matrix_sorensen_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
+
+# rownames(assignment_matrix_ochiai_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
+# colnames(assignment_matrix_ochiai_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
+
+rownames(assignment_matrix_jaccard_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
+colnames(assignment_matrix_jaccard_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
+
+rownames(assignment_matrix_ot_jaccard_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
+colnames(assignment_matrix_ot_jaccard_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
+
+rownames(assignment_matrix_embedding_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
+colnames(assignment_matrix_embedding_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
+
+rownames(assignment_matrix_acm_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
+colnames(assignment_matrix_acm_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
+
+rownames(assignment_matrix_sokal_michener_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
+colnames(assignment_matrix_sokal_michener_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
+
+rownames(assignment_matrix_rogers_tanimoto_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
+colnames(assignment_matrix_rogers_tanimoto_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
+
+rownames(assignment_matrix_hamann_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
+colnames(assignment_matrix_hamann_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
+
+rownames(assignment_matrix_cosine_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
+colnames(assignment_matrix_cosine_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
+
+```
+
+
+
 
