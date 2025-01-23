@@ -543,7 +543,7 @@ load("dist_ot_jaccard_mx.RData")
 # **Obtention des coordonnées**
 
 ::: {#intro_coord style="text-align:justify"}
-Les autres méthodes de projection des maladies dans un même espace permettent l'obtrention de coordonnées factorielles. Afin de comparer l'ensemble de nos méthodes, y compris les calculs classiques des distances, nous voulons obtenir des coordonnées factorielles pour l'ensemble des méthodes sur un nombre de dimensions équivalents pour chacune. Ici nous choisissons arbitrairement *384 dimensions** car il s'agit du nombre de dimensions que l'on peut obtenir avec l'embedding (facteur limitant).
+Les autres méthodes de projection des maladies dans un même espace permettent l'obtrention de coordonnées factorielles. Afin de comparer l'ensemble de nos méthodes, y compris les calculs classiques des distances, nous voulons obtenir des coordonnées factorielles pour l'ensemble des méthodes sur un nombre de dimensions équivalents pour chacune. Ici nous choisissons arbitrairement **384 dimensions** car il s'agit du nombre de dimensions que l'on peut obtenir avec l'embedding (facteur limitant).
 :::
 
 ## MDS unfolding 
