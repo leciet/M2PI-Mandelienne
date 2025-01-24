@@ -112,7 +112,7 @@ selected_distances <- abd %>%
 # [2] "Other specified congenital anomalies of nervous system" 108 -----------------------------------
 
 n_perm <- 10
-row <- or_df0[c("Other specified congenital anomalies of nervous system"),]
+row <- or_df0[c("Breast cancer"),]
 permutation_list <- vector("list", n_perm)
 distances_list <- vector("list", n_perm)
 original_rowname <- rownames(row)
@@ -131,7 +131,7 @@ for(i in 1:n_perm) {
   # dans une liste de distances
 }
 
-plot(density(as.matrix(dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"),])),col='red',main = 'Other specified congenital anomalies of nervous system : 108 phenotypes', sub = '1083 simple diseases kept')
+plot(density(as.matrix(dist_or_sorensen_mx[c("Breast cancer"),])),col='red',main = 'Breast cancer', sub="6 genes kept")
 pmin <- c()
 for(i in 1:10){
   pmin <- append(pmin,min(distances_list[[i]]))
@@ -142,10 +142,10 @@ seuil <- min(pmin)
 
 library(tidyverse)
 
-abd <- as.data.frame(dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"),])
+abd <- as.data.frame(dist_or_sorensen_mx[c("Breast cancer"),])
 # Sélectionner toutes les distances inférieures au seuil
 selected_distances <- abd %>% 
-  filter(`dist_or_sorensen_mx[c("Other specified congenital anomalies of nervous system"), ]`<=seuil)
+  filter(`dist_or_sorensen_mx[c("Breast cancer"), ]`<=seuil)
 # on a 1041 gènes sélectionné
 
 

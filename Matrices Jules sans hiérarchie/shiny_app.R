@@ -1,7 +1,6 @@
 library(shiny)
-library(dplyr)
-library(tidyr)
 library(ollamar)
+library(tidyverse)
 library(stringr)
 library(sys)
 
@@ -53,12 +52,12 @@ collect_scores <- function(prompt, gene, disease, n_scores = 5, max_attempts = 5
   
   return(list(
     results = data.frame(
-      gene = gene,
-      disease = disease,
-      mean_score = mean_score,
-      ci_lower = ci_lower,
-      ci_upper = ci_upper,
-      conf_level = conf_level,
+      gène = gene,
+      maladie = disease,
+      score_moyen = mean_score,
+      conf_inf = ci_lower,
+      conf_sup = ci_upper,
+      niv_conf = conf_level,
       stringsAsFactors = FALSE
     ),
     reasons = reasons
@@ -182,18 +181,18 @@ server <- function(input, output, session) {
   
   # Store cumulative results
   cumulative_results1 <- reactiveVal(data.frame(
-    gene = character(), disease = character(),
-    mean_score = numeric(), ci_lower = numeric(),
-    ci_upper = numeric(), conf_level = numeric(),
-    matrices_used = character(), threshold_used = numeric(),
+    gène = character(), maladie = character(),
+    score_moyen = numeric(), conf_inf = numeric(),
+    conf_sup = numeric(), niv_conf = numeric(),
+    matrices_util = character(), seuil = numeric(),
     stringsAsFactors = FALSE
   ))
   
   cumulative_results2 <- reactiveVal(data.frame(
-    gene = character(), disease = character(),
-    mean_score = numeric(), ci_lower = numeric(),
-    ci_upper = numeric(), conf_level = numeric(),
-    matrices_used = character(), threshold_used = numeric(),
+    gène = character(), maladie = character(),
+    score_moyen = numeric(), conf_inf = numeric(),
+    conf_sup = numeric(), niv_conf = numeric(),
+    matrices_util = character(), seuil = numeric(),
     stringsAsFactors = FALSE
   ))
   
@@ -204,8 +203,8 @@ server <- function(input, output, session) {
   process_results <- function(results, matrices, threshold) {
     results %>%
       mutate(
-        matrices_used = paste(matrices, collapse = ", "),
-        threshold_used = threshold
+        matrices_util = paste(matrices, collapse = ", "),
+        seuil = threshold
       )
   }
   # Matrices réactives
@@ -225,8 +224,8 @@ server <- function(input, output, session) {
     req(combined_matrix())
     combined_matrix() %>%
       as.data.frame() %>%
-      mutate(disease = rownames(.)) %>%
-      pivot_longer(-disease, names_to = "gene", values_to = "Association") %>%
+      mutate(maladie = rownames(.)) %>%
+      pivot_longer(-maladie, names_to = "gène", values_to = "Association") %>%
       filter(Association >= input$seuil)
   })
   
@@ -261,7 +260,7 @@ server <- function(input, output, session) {
   # Handle dynamic updates for inputs
   observe({
     req(df_tidy())
-    unique_diseases <- unique(df_tidy()$disease)
+    unique_diseases <- unique(df_tidy()$maladie)
     updateSelectInput(session, "disease1", choices = unique_diseases)
   })
   
@@ -273,21 +272,21 @@ server <- function(input, output, session) {
   
   observe({
     req(input$disease1, df_tidy())
-    filtered_data <- df_tidy() %>% filter(disease == input$disease1)
-    unique_genes <- unique(filtered_data$gene)
+    filtered_data <- df_tidy() %>% filter(maladie == input$disease1)
+    unique_genes <- unique(filtered_data$gène)
     updateSelectizeInput(session, "genes1", choices = unique_genes)
   })
   
   observe({
     req(df_tidy())
-    unique_genes <- unique(df_tidy()$gene)
+    unique_genes <- unique(df_tidy()$gène)
     updateSelectInput(session, "gene2", choices = unique_genes)
   })
   
   observe({
     req(input$gene2, df_tidy())
-    filtered_data <- df_tidy() %>% filter(gene == input$gene2)
-    unique_diseases <- unique(filtered_data$disease)
+    filtered_data <- df_tidy() %>% filter(gène == input$gene2)
+    unique_diseases <- unique(filtered_data$maladie)
     updateSelectizeInput(session, "diseases2", choices = unique_diseases)
   })
   
@@ -308,7 +307,7 @@ server <- function(input, output, session) {
           incProgress(1 / length(input$genes1))
           analyze_gene_disease(
             gene = g,
-            disease = input$disease1,
+            disease =  input$disease1,
             n_scores = input$n_scores1,
             conf_level = input$conf_level1
           )
@@ -323,8 +322,8 @@ server <- function(input, output, session) {
         reasons1(c(
           lapply(seq_along(all_results), function(i) {
             sprintf("Pour %s - %s :\n%s",
-                    all_results[[i]]$results$gene,
-                    all_results[[i]]$results$disease,
+                    all_results[[i]]$results$gène,
+                    all_results[[i]]$results$maladie,
                     paste(all_results[[i]]$reasons, collapse = "\n"))
           }),
           reasons1()
@@ -339,7 +338,7 @@ server <- function(input, output, session) {
       )
     })
   })
-
+  
   # Append results for Tab 2
   observeEvent(input$analyze2, {
     req(input$diseases2, input$gene2)
@@ -372,8 +371,8 @@ server <- function(input, output, session) {
         reasons2(c(
           lapply(seq_along(all_results), function(i) {
             sprintf("Pour %s - %s :\n%s",
-                    all_results[[i]]$results$gene,
-                    all_results[[i]]$results$disease,
+                    all_results[[i]]$results$gène,
+                    all_results[[i]]$results$maladie,
                     paste(all_results[[i]]$reasons, collapse = "\n"))
           }),
           reasons2()
@@ -437,4 +436,3 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui = ui, server = server)
-

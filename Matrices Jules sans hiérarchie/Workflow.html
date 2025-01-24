@@ -1750,9 +1750,10 @@ cat(sprintf(&quot;Statistiques de densité de la matrice:\n  - Totale: %.2f%%\n 
 ##   - Totale: 0.55%
 ##   - Maladies simples: 0.62%
 ##   - Maladies complexes: 0.10%</code></pre>
-<p>::: {#matrice creuse style=“test-align:justify”} On observe que la
-matrice initiale est creuse. Cela est à prendre en compte dans la suite
-de l’analyse. :::</p>
+<div id="matrice_creuse" style="test-align:justify">
+<p>On observe que la matrice initiale est creuse. Cela est à prendre en
+compte dans la suite de l’analyse.</p>
+</div>
 <pre class="r"><code>## Distribution des associations par type de maladie
 # Calcul du nombre de phénotypes par maladie
 phenotypes_par_maladie &lt;- rowSums(phenotype_maladie_s_c != 0)
@@ -2864,6 +2865,71 @@ rownames(assignment_matrix_cosine_classif) &lt;- rownames(phenotype_maladie_s_c[
 colnames(assignment_matrix_cosine_classif) &lt;- rownames(phenotype_maladie_s_c[1:6102,])</code></pre>
 </div>
 </div>
+</div>
+<div id="llm" class="section level1" number="8">
+<h1><span class="header-section-number">8</span> LLM</h1>
+<pre class="r"><code>load(&#39;association_matrix_sorensen.RData&#39;)
+sorensen_permut &lt;- association_matrix
+load(&#39;association_matrix_sokal_sneath.RData&#39;)
+sokal_sneath_permut &lt;- association_matrix_sokal_sneath
+load(&#39;association_matrix_sokal_michener.RData&#39;)
+sokal_michener_permut &lt;- association_matrix
+load(&#39;association_matrix_rogers_tanimoto.RData&#39;)
+rogers_tanimoto_permut &lt;- association_matrix
+load(&#39;association_matrix_ochiai.RData&#39;)
+ochiai_permut &lt;- association_matrix
+load(&#39;association_matrix_jaccard.RData&#39;)
+jaccard_permut &lt;- association_matrix
+load(&#39;association_matrix_hamann.RData&#39;)
+hamann_permut &lt;- association_matrix
+load(&#39;association_matrix_cosine.RData&#39;)
+cosine_permut &lt;- association_matrix_cosine
+
+load(&quot;assignment_matrix_sorensen_classif.RData&quot;)
+sorensen_classif &lt;- assignment_matrix_sorensen_classif
+load(&quot;assignment_matrix_ochiai_classif.RData&quot;)
+ochiai_classif &lt;- assignment_matrix_ochiai_classif
+load(&quot;assignment_matrix_jaccard_classif.RData&quot;)
+jaccard_classif &lt;- assignment_matrix_jaccard_classif
+load(&quot;assignment_matrix_ot_jaccard_classif.RData&quot;)
+ot_jaccard_classif &lt;- assignment_matrix_ot_jaccard_classif
+load(&quot;assignment_matrix_embedding_classif.RData&quot;)
+embedding_classif &lt;- assignment_matrix_embedding_classif
+load(&quot;assignment_matrix_acm_classif.RData&quot;)
+acm_classif &lt;- assignment_matrix_acm_classif
+load(&quot;assignment_matrix_sokal_michener_classif.RData&quot;)
+sokal_michener_classif &lt;- assignment_matrix_sokal_michener_classif
+load(&#39;assignment_matrix_sokal_sneath_classif.RData&#39;)
+sokal_sneath_classif &lt;- assignment_matrix_sokal_sneath_classif
+load(&quot;assignment_matrix_rogers_tanimoto_classif.RData&quot;)
+rogers_tanimoto_classif &lt;- assignment_matrix_rogers_tanimoto_classif
+load(&quot;assignment_matrix_hamann_classif.RData&quot;)
+hamann_classif &lt;- assignment_matrix_hamann_classif
+load(&quot;assignment_matrix_cosine_classif.RData&quot;)
+cosine_classif &lt;- assignment_matrix_cosine_classif
+
+
+association_matrices &lt;- list(sorensen_permut=sorensen_permut,
+                          sokal_sneath_permut=sokal_sneath_permut,
+                          sokal_michener_permut=sokal_michener_permut,
+                          rogers_tanimoto_permut=rogers_tanimoto_permut,
+                          ochiai_permut=ochiai_permut,
+                          jaccard_permut=jaccard_permut,
+                          hamann_permut=hamann_permut,
+                          cosine_permut=cosine_permut,
+                          sorensen_classif=sorensen_classif,
+                          ochiai_classif=ochiai_classif,
+                          jaccard_classif=jaccard_classif,
+                          ot_jaccard_classif=ot_jaccard_classif,
+                          embedding_classif=embedding_classif,
+                          acm_classif=acm_classif,
+                          sokal_michener_classif=sokal_michener_classif, 
+                          sokal_sneath_classif=sokal_sneath_classif,
+                          rogers_tanimoto_classif=rogers_tanimoto_classif,
+                          hamann_classif=hamann_classif,
+                          cosine_classif=cosine_classif)
+
+save(association_matrices,file=&#39;association_matrices_2.RData&#39;)</code></pre>
 </div>
 <div class="footnotes footnotes-end-of-document">
 <hr />

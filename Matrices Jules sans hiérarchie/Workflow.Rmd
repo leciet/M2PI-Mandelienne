@@ -32,7 +32,7 @@ L'**objectif** de ce document est de proposer une démarche complète permettant
 
 ## Hypothèses
 
-:::{#hypotheses style="text-align:justify"}
+::: {#hypotheses style="text-align:justify"}
 Nous partons des hypothèses suivantes :
 
 -   Il est possible de comprendre les maladies complexes en les rapprochant de maladies simples similaires.
@@ -51,12 +51,10 @@ Le projet s’articule autour de trois étapes principales :
 
 2.  **Définition d’un seuil d’assignation des gènes** : On utilise un seuil global ou spécifique à chaque maladie complexe, au travers de plusieurs méthodes, afin de définir notre croyance en une association et donc de conserver une liste d'associations gène-maladie que l'on pense fortement corrélées à la maladie étudiée.
 
-3. **Interprétation des associations gène-maladie** : On définie un score de pertinence de l'association gène-maladie par le biais d'un large modèle de langage (LLM).
+3.  **Interprétation des associations gène-maladie** : On définie un score de pertinence de l'association gène-maladie par le biais d'un large modèle de langage (LLM).
 
 À chacune des étapes nous cherchons à comparer plusieurs méthodes pour obtenir la plus adaptée à notre contexte.
 :::
-
-![Schéma général de la démarche](images/schema_workflow)
 
 ## Packages requis
 
@@ -93,7 +91,7 @@ Les données utilisées sont isssues de deux bases de données différentes :
 
 -   `Phecode` pour les maladies complexes
 
-Il s'agit de tableau de Présence/Absence où chaque ligne représente une maladie et chaque colonne un phénotype. 
+Il s'agit de tableau de Présence/Absence où chaque ligne représente une maladie et chaque colonne un phénotype.
 
 |           | Phénotype 1 | Phénotype 2 |
 |:---------:|:-----------:|:-----------:|
@@ -170,7 +168,7 @@ colnames(phenotype_maladie_s_c) <- name_ph[formatted_colnames]
 
 ## Structure
 
-::: {#structure_data style="text-align:justify"}
+::: {style="text-align:justify"}
 Avant d'appliquer nos méthodes, nous nous intéressons à la structure des données
 :::
 
@@ -205,7 +203,7 @@ cat(sprintf("Statistiques de densité de la matrice:\n  - Totale: %.2f%%\n  - Ma
 
 ```
 
-::: {#matrice creuse style="test-align:justify"}
+::: {#matrice_creuse style="test-align:justify"}
 On observe que la matrice initiale est creuse. Cela est à prendre en compte dans la suite de l'analyse.
 :::
 
@@ -463,10 +461,8 @@ load("dist_or_sorensen_mx.RData")
 
 # **Transport Optimal (TO)**
 
-:::{#intro_to style="text-align:justify"}
-Le transport optimal est une méthode **holistique et exhaustive** permettant d'établir des correspondances entre les maladies mendéliennes et complexes. Son principal objectif est de **minimiser une distance globale** entre tous les gènes possibles, tout en considérant un ensemble complet de données.
-
-Le Transport optimal n'est appliqué que sur la matrice de distances de Jaccard dans ce workflow 
+::: {#intro_to style="text-align:justify"}
+Le transport optimal est une méthode qui permet de déterminer la manière la plus efficace de redistribuer une masse (ou une probabilité) d'un point à un autre, tout en minimisant un coût global associé au déplacement, souvent basé sur une mesure de distance ou un critère spécifique. Dans notre cas, on cherche à déplacer les maladies simples sur les maladies complexes.
 :::
 
 ## Définition de la fonction de TO
@@ -533,25 +529,24 @@ save(dist_ot_jaccard_mx, file="dist_ot_jaccard_mx.RData")
 
 ```
 
-Le calcul de la matrice de Transport optimal étant assez long, la matrice a été sauvegardée dans l'objet RData `dist_ot_jaccard_mx.RData`. 
+Le calcul de la matrice de Transport optimal étant assez long, la matrice a été sauvegardée dans l'objet RData `dist_ot_jaccard_mx.RData`.
 
 ```{r load_to}
 load("dist_ot_jaccard_mx.RData")
 ```
 
-
 # **Obtention des coordonnées**
 
 ::: {#intro_coord style="text-align:justify"}
-Les autres méthodes de projection des maladies dans un même espace permettent l'obtrention de coordonnées factorielles. Afin de comparer l'ensemble de nos méthodes, y compris les calculs classiques des distances, nous voulons obtenir des coordonnées factorielles pour l'ensemble des méthodes sur un nombre de dimensions équivalents pour chacune. Ici nous choisissons arbitrairement **384 dimensions** car il s'agit du nombre de dimensions que l'on peut obtenir avec l'embedding (facteur limitant).
+L'objectif de cette section est d'obtenir en output les coordonnées de nos maladies dans un espace. Cependant, nos méthodes actuelles ne permettent pas d'obtenir directement ce résultat. En effet, si l'ACM et l'embedding transforment notre matrice de présence/absence en une matrice de coordonnées ce n’est pas le cas des méthodes classiques de calcul de distances qui génèrent une matrice de distances. Il est nécessaire d'appliquer une technique de MDS unfolding, que nous expliquerons ci-dessous, pour obtenir un résultat de nature similaire.
+
+Ici nous choisissons arbitrairement de représenter nos maladies dans **384 dimensions** car il s'agit du nombre de dimensions que l'on peut obtenir avec l'embedding (facteur limitant).
 :::
 
-## MDS unfolding 
+## MDS unfolding
 
-:::{#intro_mds style="text-align:justify"}
-Appliquer la MDS unfolding sur une matrice de distance asymétrique permet de représenter dans un espace à faible dimension des relations ou préférences entre deux ensembles distincts (individus et objets) où les interactions ne sont pas symétriques, c'est-à-dire que la distance entre un individu et un objet peut différer selon la direction (ici on s'intéresse au lien de causalité d'un gène pour une maladie).
-
-La MDS unfolding génère alors des coordonnées qui préservent au mieux ces asymétries, tout en fournissant une visualisation claire des relations de causalité dans un espace commun.
+::: {#intro_mds style="text-align:justify"}
+La **MDS unfolding** (Multidimensional Scaling unfolding) est une méthode de réduction dimensionnelle permettant de représenter deux ensembles distincts, comme des individus et leurs préférences, dans un même espace euclidien. Contrairement au MDS classique qui traite des matrices symétriques, elle est adaptée aux matrices dissymétriques (rectangulaires), où les relations sont définies entre deux groupes différents. L’objectif est de projeter ces ensembles dans un espace de faible dimension tout en respectant au mieux les distances ou proximités initiales. Les individus et les objets sont représentés par des points, et la distance entre eux reflète leur relation observée dans les données. Cette méthode est particulièrement utile pour visualiser et interpréter les préférences ou associations entre deux ensembles dans des contextes complexes.
 :::
 
 ### Définition de la fonction pour la MDS
@@ -614,7 +609,7 @@ load("coord_fact_mds_cosine.RData")
 
 ## Embedding
 
-:::{#intro_embedding style="text-align:justify"}
+::: {#intro_embedding style="text-align:justify"}
 L’**embedding** est une technique permettant de représenter des mots, des phrases ou des entités sous forme de vecteurs dans un espace numérique.Elle repose sur la vectorisation de mots individuels ou de phrases entières :
 
 1.  Chaque mot de la phrase est converti en un vecteur dans un espace vectoriel pré-entraîné.
@@ -622,7 +617,6 @@ L’**embedding** est une technique permettant de représenter des mots, des phr
 2.  Pour représenter une phrase ou une entité, comme une maladie, la moyenne des vecteurs des mots individuels est calculée.
 
 Pour générer des embeddings adaptés aux maladies complexes, nous utilisons un **prompt spécifique** qui contextualise les phénotypes de chaque maladie
-
 
 > *"We are a group of individuals suffering from the same disease, but it manifests itself differently in each of us. Here is a list of the symptoms we may experience: [...]"*
 
@@ -661,9 +655,9 @@ write_csv(x = liste_phenotype,file = 'embedding_0hierarchie.csv')
 
 ```
 
-### Calcul des coordonnées par embedding 
+### Calcul des coordonnées par embedding
 
-:::{#calcul_embedding style="text-align:justify"}
+::: {#calcul_embedding style="text-align:justify"}
 Le calcul des coordonnées a été réalisé sur Python avec le modèle **SBERT**. Le résultat de l'embedding a été sauvegardé dans le fichier `embeddings_Pheno_SBERT_sans_hierarchie.csv`
 :::
 
@@ -675,10 +669,8 @@ coord_fact_embedding <- read.csv("embeddings_Pheno_SBERT_sans_hierarchie.csv")
 
 ## ACM
 
-:::{#intro_acm style="text-align:justify"}
-
+::: {#intro_acm style="text-align:justify"}
 L'objectif de cette ACM (Analyse des Correspondances Multiples) est de projeter les maladies complexes (MC) dans un espace défini par les maladies simples (MS). Pour ce faire, les maladies complexes sont traitées comme des individus supplémentaires, tandis que l'espace de représentation est construit exclusivement à partir des maladies simples.
-
 :::
 
 ```{r acm, eval=FALSE}
@@ -703,14 +695,13 @@ load("coord_fact_acm.RData")
 
 ```
 
-
 # **Comparaison de l'ensemble des méthodes**
 
-:::{#intro_afm style="text-align:justify"}
+::: {#intro_afm style="text-align:justify"}
 Afin de comparer l'ensemble de nos méthodes, nous réalisons une Analyse Factorielle Multiple (AFM) sur les coordonnées obtenues par chaque méthodes sur l'ensemble de nos dimensions. Ainsi nous considérons nos dimensions comme des variables et nos méthodes comme des groupes.
 :::
 
-## Mise en forme des données pour l'AFM 
+## Mise en forme des données pour l'AFM
 
 ```{r data_afm,eval=FALSE}
 maladies_acm <- res.acm$ind.sup$coord
@@ -754,7 +745,7 @@ res.mfa.toutes.distances <- MFA(data_pour_afm.toutes.distances,
 save(res.mfa.toutes.distances, file = "res.mfa.toutes.distances.RData")
 ```
 
-## Représentation graphique 
+## Représentation graphique
 
 ```{r plot_afm, message=FALSE, warning=FALSE}
 load("res.mfa.toutes.distances.RData")
@@ -791,9 +782,15 @@ fviz_mfa_axes(res.mfa.toutes.distances,
 
 # **Assignation de gènes**
 
-## Permutations 
+## Permutations
 
-### Définnition des fonctions 
+::: {#intro_permut style="text-align:justify"}
+Une fois les coordonnées obtenues, il est nécessaire de définir un seuil permettant d’apparier les maladies complexes aux gènes. Autrement dit, il s'agit de déterminer une valeur critique au-delà de laquelle une association entre une maladie complexe et une maladie simple sera considérée comme significative.
+
+Dans cette section, nous expliquons comment la p-value critique a été estimée pour chaque maladie. L’objectif est d’évaluer les associations significatives en permutant aléatoirement les valeurs binaires (0 et 1) associées à la maladie complexe, tout en maintenant la proportion initiale de 0 et 1 et en conservant inchangées les données des autres maladies simples. Ces permutations brisent les relations existantes, et après chaque permutation, les distances entre la maladie complexe et les maladies simples sont recalculées. En répétant ce processus plusieurs fois, on construit une distribution empirique des distances sous l’hypothèse nulle (absence d’association réelle). La valeur minimale des distances obtenues pour chaque permutation est utilisée comme seuil critique. Enfin, la distance réelle entre la maladie complexe non permutée et les maladies simples est comparée à cette distribution : si elle est inférieure au seuil critique, l’association est jugée significative, confirmant qu’elle n’est pas due au hasard. Ce processus permet d’identifier des relations pertinentes tout en contrôlant le risque d’erreur statistique.
+:::
+
+### Définnition des fonctions
 
 ```{r fonction_permut}
 # Fonctions vectorisées pour chaque type de distance afin d'effectuer plus rapidement les calculs
@@ -887,7 +884,7 @@ run_all_distances <- function(phenotype_matrix, n_perm = 10, start_idx = 6103, e
 }
 ```
 
-### Application des permutations 
+### Application des permutations
 
 ```{r execute_permut, eval=FALSE}
 # Exécuter toutes les distances
@@ -899,7 +896,7 @@ save(results_all, file="results_all_distances.RData")
 load ("results_all_distances.RData")
 ```
 
-### Création des matrices d'assignation 
+### Création des matrices d'assignation
 
 ```{r fonction_matrice_assignation}
 # Matrice d'assignation  ----
@@ -965,12 +962,12 @@ load("association_matrices.RData")
 
 ```
 
-## Classification 
+## Classification
 
-:::{#intro_classif style="text-align:justify"}
+::: {#intro_classif style="text-align:justify"}
+Une autre méthode afin d'obtenir une matrice d'assignation est de passer par une classification. Contrairement aux permutations, la classification peut être utilisée pour l'ensemble des méthodes et non seulement pour les matrices de distances.
 
-Une autre méthode afin d'obtenir une matrice d'assignation est de passer par une classification. Contrairement aux permutations, la classification peut être utilisée pour l'ensemble des méthodes et non seulement pour les matrices de distances. 
-
+La réalisation d'une classification pose certaines contraintes. Habituellement, un individu sera présent dans une seule classe. Or dans notre contexte, un gène est en mesure d'expliquer plusieurs maladies complexes.
 :::
 
 ### Préparation des données
@@ -1069,13 +1066,10 @@ load("data_classif_cosine.RData")
 
 ```
 
+### Application de la classification
 
-### Application de la classification 
-
-:::{#classif style='text-align:justify'}
-
-Nous avons décidé de réaliser une classification à 384 classes, correspondant aux 384 dimensions conservées pour toute les méthodes. Ce choix a été fait car réaliser une classification sur un nombre de classes plus élevés que le nombre de composantes peut s'avérer difficile. 
-
+::: {#classif style="text-align:justify"}
+Nous avons décidé de réaliser une classification à 384 classes, correspondant aux 384 dimensions conservées pour toute les méthodes. Ce choix a été fait car réaliser une classification sur un nombre de classes plus élevés que le nombre de composantes peut s'avérer difficile.
 :::
 
 ```{r classif, eval=FALSE}
@@ -1154,7 +1148,7 @@ load("hc_cosine.RData")
 
 ```
 
-### Transformation 
+### Transformation
 
 ```{r fonction_transfo_cluster, eval=FALSE}
 
@@ -1243,7 +1237,7 @@ save(assignment_matrix_cosine_classif, file="assignment_matrix_cosine_classif.RD
 ```{r load_transfo_cluster}
 
 load("assignment_matrix_sorensen_classif.RData")
-# load("assignment_matrix_ochiai_classif.RData")
+load("assignment_matrix_ochiai_classif.RData")
 load("assignment_matrix_jaccard_classif.RData")
 load("assignment_matrix_ot_jaccard_classif.RData")
 load("assignment_matrix_embedding_classif.RData")
@@ -1256,8 +1250,8 @@ load("assignment_matrix_cosine_classif.RData")
 rownames(assignment_matrix_sorensen_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
 colnames(assignment_matrix_sorensen_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
 
-# rownames(assignment_matrix_ochiai_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
-# colnames(assignment_matrix_ochiai_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
+rownames(assignment_matrix_ochiai_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
+colnames(assignment_matrix_ochiai_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
 
 rownames(assignment_matrix_jaccard_classif) <- rownames(phenotype_maladie_s_c[6103:7064,])
 colnames(assignment_matrix_jaccard_classif) <- rownames(phenotype_maladie_s_c[1:6102,])
@@ -1285,6 +1279,72 @@ colnames(assignment_matrix_cosine_classif) <- rownames(phenotype_maladie_s_c[1:6
 
 ```
 
+# **LLM**
+
+```{r prep_shiny}
+
+load('association_matrix_sorensen.RData')
+sorensen_permut <- association_matrix
+load('association_matrix_sokal_sneath.RData')
+sokal_sneath_permut <- association_matrix_sokal_sneath
+load('association_matrix_sokal_michener.RData')
+sokal_michener_permut <- association_matrix
+load('association_matrix_rogers_tanimoto.RData')
+rogers_tanimoto_permut <- association_matrix
+load('association_matrix_ochiai.RData')
+ochiai_permut <- association_matrix
+load('association_matrix_jaccard.RData')
+jaccard_permut <- association_matrix
+load('association_matrix_hamann.RData')
+hamann_permut <- association_matrix
+load('association_matrix_cosine.RData')
+cosine_permut <- association_matrix_cosine
+
+load("assignment_matrix_sorensen_classif.RData")
+sorensen_classif <- assignment_matrix_sorensen_classif
+load("assignment_matrix_ochiai_classif.RData")
+ochiai_classif <- assignment_matrix_ochiai_classif
+load("assignment_matrix_jaccard_classif.RData")
+jaccard_classif <- assignment_matrix_jaccard_classif
+load("assignment_matrix_ot_jaccard_classif.RData")
+ot_jaccard_classif <- assignment_matrix_ot_jaccard_classif
+load("assignment_matrix_embedding_classif.RData")
+embedding_classif <- assignment_matrix_embedding_classif
+load("assignment_matrix_acm_classif.RData")
+acm_classif <- assignment_matrix_acm_classif
+load("assignment_matrix_sokal_michener_classif.RData")
+sokal_michener_classif <- assignment_matrix_sokal_michener_classif
+load('assignment_matrix_sokal_sneath_classif.RData')
+sokal_sneath_classif <- assignment_matrix_sokal_sneath_classif
+load("assignment_matrix_rogers_tanimoto_classif.RData")
+rogers_tanimoto_classif <- assignment_matrix_rogers_tanimoto_classif
+load("assignment_matrix_hamann_classif.RData")
+hamann_classif <- assignment_matrix_hamann_classif
+load("assignment_matrix_cosine_classif.RData")
+cosine_classif <- assignment_matrix_cosine_classif
 
 
+association_matrices <- list(jaccard_permut=jaccard_permut,
+                             jaccard_classif=jaccard_classif,
+                             ot_jaccard_classif=ot_jaccard_classif,
+                             sorensen_permut=sorensen_permut,
+                             sorensen_classif=sorensen_classif,
+                             sokal_sneath_permut=sokal_sneath_permut,
+                             sokal_sneath_classif=sokal_sneath_classif,
+                             ochiai_permut=ochiai_permut,
+                             ochiai_classif=ochiai_classif,
+                             cosine_permut=cosine_permut,
+                             cosine_classif=cosine_classif,
+                             rogers_tanimoto_permut=rogers_tanimoto_permut,
+                             rogers_tanimoto_classif=rogers_tanimoto_classif,
+                             hamann_permut=hamann_permut,
+                             hamann_classif=hamann_classif,
+                             sokal_michener_permut=sokal_michener_permut,
+                             sokal_michener_classif=sokal_michener_classif,
+                             acm_classif=acm_classif,
+                             embedding_classif=embedding_classif
+                             )
 
+save(association_matrices,file='association_matrices_2.RData')
+
+```
