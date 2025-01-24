@@ -179,6 +179,10 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
+  observe({
+    print(reactiveValuesToList(session$clientData))
+  })
+  
   # Store cumulative results
   cumulative_results1 <- reactiveVal(data.frame(
     gène = character(), maladie = character(),
