@@ -9,6 +9,8 @@ L’objectif final de notre étude est de proposer, pour chaque maladie complexe
 
 Dans le dossier Matrices Jules sans hiérarchie, le Markdown `Workflow.Rmd` reprend l'ensemble du code excepté pour l'embedding qui a été réalisé sur python. Certains calculs étant très long, ils ne sont pas éxécuté directement dans le markdown même si ils sont présents.
 
+L'application shiny, également présente dans le dossier Matrice Jules sans hiérarchie, nécessite l'installation préalable de Ollama 
+
 
 
 
